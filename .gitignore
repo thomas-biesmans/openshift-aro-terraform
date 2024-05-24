@@ -1,0 +1,9 @@
+# Local .terraform directories
+**/*.*
+!**/*.tf
+!**/initinsert.psql
+
+
+!README.md
+!LICENSE.md
+!.gitignore
