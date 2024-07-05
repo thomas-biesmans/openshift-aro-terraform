@@ -5,7 +5,7 @@ variable "azlocation" {
 
 variable "ownerref" {
   type        = string
-  default     = "ThBie"
+  default     = "thbie"
   description = "Owner of the project short name for naming resources or login"
 }
 
@@ -26,6 +26,21 @@ variable "activity" {
   default     = "demo"
   description = "activity"
 }
+
+variable "openshift" {
+  type = map(string)
+  default = {
+    version           = "4.14.16"         # Version running on the cluster, available versions found through 'az aro get-versions --location "westeurope\"'
+    domain            = "arotest.domain"  # Domain to be used for the cluster
+    main_vm_size      = "Standard_D8s_v4" # CPU family for the control nodes, minimally Standard_D8s_v3
+    worker_vm_size    = "Standard_D4s_v4" # CPU family for the worker nodes, minimally Standard_D4s_v3
+    worker_disk_size  = 128               # Worker node disk size
+    worker_node_count = 3                 # Worker node count
+  }
+  description = "OpenShift specifics"
+}
+
+
 
 
 # required to get the operator to worker

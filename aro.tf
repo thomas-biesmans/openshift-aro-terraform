@@ -1,3 +1,13 @@
+
+# Registering provider for Azure Red Hat OpenShift - Default will skip provider registration
+
+resource "azurerm_resource_provider_registration" "reg-aro" {
+  name = "Microsoft.RedHatOpenShift"
+}
+
+
+# Configuring the Azure provider
+
 data "azuread_client_config" "current" {
 
 }
@@ -20,15 +30,16 @@ resource "azuread_service_principal_password" "sp_pw_aro" {
   service_principal_id = azuread_service_principal.sp_aro.object_id
 }
 
-//also here :
-//https://learn.microsoft.com/en-us/azure/openshift/quickstart-openshift-arm-bicep-template?pivots=aro-arm
-//https://cloud.redhat.com/experts/aro/terraform-install/
-//https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/redhat_openshift_cluster
-//az ad sp list --display-name 'Azure Red Hat OpenShift RP' --output json | jq '.[0]["servicePrincipalNames"]'
+# also here :
+# https://learn.microsoft.com/en-us/azure/openshift/quickstart-openshift-arm-bicep-template?pivots=aro-arm
+# https://cloud.redhat.com/experts/aro/terraform-install/
+# https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/redhat_openshift_cluster
+# az ad sp list --display-name 'Azure Red Hat OpenShift RP' --output json | jq '.[0]["servicePrincipalNames"]'
 
 data "azuread_service_principal" "redhatopenshift" {
-  // This is the Azure Red Hat OpenShift RP service principal id, do NOT delete it
-  client_id = "f1dd0a37-89c6-4e07-bcd1-ffd3d43d8875"
+  # This is the Azure Red Hat OpenShift RP service principal id managed by Red Hat, do NOT delete it
+  client_id  = "f1dd0a37-89c6-4e07-bcd1-ffd3d43d8875"
+  depends_on = [azurerm_resource_provider_registration.reg-aro]
 }
 
 resource "azurerm_role_assignment" "role_network1" {
@@ -82,8 +93,8 @@ resource "azurerm_redhat_openshift_cluster" "aro_cluster" {
   tags                = local.tags
 
   cluster_profile {
-    domain  = local.domain
-    version = "4.14.16"
+    domain  = var.openshift["domain"]
+    version = var.openshift["version"]
     # required to get the operator to worker
     # which is import for the kasten operator
     # https://console.redhat.com/openshift/install/azure/aro-provisioned
@@ -96,7 +107,7 @@ resource "azurerm_redhat_openshift_cluster" "aro_cluster" {
   }
 
   main_profile {
-    vm_size   = "Standard_D8s_v3"
+    vm_size   = var.openshift["main_vm_size"]
     subnet_id = azurerm_subnet.main_subnet.id
   }
 
@@ -109,9 +120,9 @@ resource "azurerm_redhat_openshift_cluster" "aro_cluster" {
   }
 
   worker_profile {
-    vm_size      = "Standard_D4s_v3"
-    disk_size_gb = 128
-    node_count   = 3
+    vm_size      = var.openshift["worker_vm_size"]
+    disk_size_gb = var.openshift["worker_disk_size"]
+    node_count   = var.openshift["worker_node_count"]
     subnet_id    = azurerm_subnet.worker_subnet.id
   }
 
