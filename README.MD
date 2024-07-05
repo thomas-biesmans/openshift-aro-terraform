@@ -14,38 +14,38 @@ default path is "../pull-secret.txt"
 
 Apply
 ```bash
-tofu apply -var="ownerref=jdoe" -var="owneremail=jdoe@acmecompany.com"
+terraform apply -var="ownerref=jdoe" -var="owneremail=jdoe@acmecompany.com"
 ```
 
 Get Kubeconfig
 ```bash
-tofu output -raw  aro_kubeconfig_out > ~/.kube/config
+terraform output -raw  aro_kubeconfig_out > ~/.kube/config
 ```
 
 Get login
 ```bash
-tofu output -raw console_url
-tofu output -raw aro_admin_login
-#tofu output -raw aro_admin_pass 
+terraform output -raw console_url
+terraform output -raw aro_admin_login
+#terraform output -raw aro_admin_pass 
 ```
 
 On MAC you can copy the password to your clipboard with pbcopy
 ```zsh
-open $(tofu output -raw console_url)
-tofu output -raw aro_admin_pass | pbcopy
+open $(terraform output -raw console_url)
+terraform output -raw aro_admin_pass | pbcopy
 ```
 
 # Storage Account for Kasten K10
 Get Storage Account
 
 ```bash
-tofu output -raw storageaccount
-#tofu output -raw storageaccount_ak 
-tofu output -raw storagecontainer
+terraform output -raw storageaccount
+#terraform output -raw storageaccount_ak 
+terraform output -raw storagecontainer
 ```
 
 ```zsh
-tofu output -raw storageaccount_ak  | pbcopy
+terraform output -raw storageaccount_ak  | pbcopy
 ```
 
 # If you installed Kasten K10

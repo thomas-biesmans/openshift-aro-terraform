@@ -5,19 +5,19 @@ variable "azlocation" {
 
 variable "ownerref" {
   type        = string
-  default     = "jdoe"
+  default     = "ThBie"
   description = "Owner of the project short name for naming resources or login"
 }
 
 variable "owneremail" {
   type        = string
-  default     = "john.doe@acmecompany.com"
+  default     = "thomas.biesmans@inetum-realdolmen.world"
   description = "Owner of the project email"
 }
 
 variable "project" {
   type        = string
-  default     = "test"
+  default     = "aro-kasten-test"
   description = "project name"
 }
 
@@ -32,8 +32,8 @@ variable "activity" {
 # which is import for the kasten operator
 # https://console.redhat.com/openshift/install/azure/aro-provisioned
 variable "pull_secret" {
-  type = string
-  default = "../pull-secret.txt"
+  type    = string
+  default = "pull-secret.txt" #../
 }
 
 data "local_file" "pull_secret" {
@@ -42,12 +42,12 @@ data "local_file" "pull_secret" {
 
 locals {
   projectname = format("%s-%s", var.ownerref, var.project)
-  domain = format("%s%s",var.ownerref, var.project)
-  
-  
+  domain      = format("%s%s", var.ownerref, var.project)
+
+
   tags = {
-	    owner = var.owneremail
-        activity = var.activity 
-	    project = var.project
+    owner    = var.owneremail
+    activity = var.activity
+    project  = var.project
   }
 }

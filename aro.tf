@@ -8,12 +8,12 @@ data "azurerm_client_config" "current" {
 
 resource "azuread_application" "app_aro" {
   display_name = "${local.projectname}-aro-with-owner"
-  owners           = [data.azuread_client_config.current.object_id]
+  owners       = [data.azuread_client_config.current.object_id]
 }
 
 resource "azuread_service_principal" "sp_aro" {
   client_id = azuread_application.app_aro.client_id
-  owners           = [data.azuread_client_config.current.object_id]
+  owners    = [data.azuread_client_config.current.object_id]
 }
 
 resource "azuread_service_principal_password" "sp_pw_aro" {
@@ -45,7 +45,7 @@ resource "azurerm_role_assignment" "role_network2" {
 
 resource "azurerm_resource_group" "aro_rg" {
   name     = "${local.projectname}-aro-rg"
-  tags	   = local.tags
+  tags     = local.tags
   location = var.azlocation
 }
 
@@ -54,7 +54,7 @@ resource "azurerm_virtual_network" "aro_vnet" {
   address_space       = ["10.15.12.0/22"]
   location            = azurerm_resource_group.aro_rg.location
   resource_group_name = azurerm_resource_group.aro_rg.name
-  tags	   = local.tags
+  tags                = local.tags
 }
 
 resource "azurerm_subnet" "main_subnet" {
@@ -79,7 +79,7 @@ resource "azurerm_redhat_openshift_cluster" "aro_cluster" {
   name                = "${local.projectname}-aro-cluster"
   location            = azurerm_resource_group.aro_rg.location
   resource_group_name = azurerm_resource_group.aro_rg.name
-  tags	   = local.tags
+  tags                = local.tags
 
   cluster_profile {
     domain  = local.domain
@@ -125,31 +125,31 @@ resource "azurerm_redhat_openshift_cluster" "aro_cluster" {
     azurerm_role_assignment.role_network2,
   ]
 
-  
+
 }
 
-#az aro get-admin-kubeconfig --name MyCluster --resource-group MyResourceGroup --debug
-#the date might change if there is an update in the api
+# az aro get-admin-kubeconfig --name MyCluster --resource-group MyResourceGroup --debug
+# the date might change if there is an update in the api
 data "azapi_resource_action" "aro_kubeconfig" {
-      type                   = "Microsoft.RedHatOpenShift/openShiftClusters@2023-09-04"
-      resource_id            = azurerm_redhat_openshift_cluster.aro_cluster.id
-      action                 = "listAdminCredentials"
-      response_export_values = ["*"]
+  type                   = "Microsoft.RedHatOpenShift/openShiftClusters@2023-09-04"
+  resource_id            = azurerm_redhat_openshift_cluster.aro_cluster.id
+  action                 = "listAdminCredentials"
+  response_export_values = ["*"]
 
-      depends_on = [
-        azurerm_redhat_openshift_cluster.aro_cluster
-      ]
+  depends_on = [
+    azurerm_redhat_openshift_cluster.aro_cluster
+  ]
 }
 
-#az aro list-credentials  --name cluster  --resource-group aro-rg --debug
-#the date might change if there is an update in the api
+# az aro list-credentials  --name cluster  --resource-group aro-rg --debug
+# the date might change if there is an update in the api
 data "azapi_resource_action" "aro_adminlogin" {
-      type                   = "Microsoft.RedHatOpenShift/openShiftClusters@2023-09-04"
-      resource_id            = azurerm_redhat_openshift_cluster.aro_cluster.id
-      action                 = "listCredentials"
-      response_export_values = ["*"]
+  type                   = "Microsoft.RedHatOpenShift/openShiftClusters@2023-09-04"
+  resource_id            = azurerm_redhat_openshift_cluster.aro_cluster.id
+  action                 = "listCredentials"
+  response_export_values = ["*"]
 
-      depends_on = [
-        azurerm_redhat_openshift_cluster.aro_cluster
-      ]
+  depends_on = [
+    azurerm_redhat_openshift_cluster.aro_cluster
+  ]
 }

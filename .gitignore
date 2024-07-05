@@ -2,7 +2,7 @@
 **/*.*
 !**/*.tf
 !**/initinsert.psql
-
+pull-secret.txt
 
 !README.md
 !LICENSE.md

@@ -1,9 +1,9 @@
 output "storageaccount" {
   value = azurerm_storage_account.sa.name
-  
+
 }
 output "storageaccount_ak" {
-  value = azurerm_storage_account.sa.secondary_access_key 
+  value     = azurerm_storage_account.sa.secondary_access_key
   sensitive = true
 }
 output "storagecontainer" {
@@ -11,13 +11,13 @@ output "storagecontainer" {
 }
 
 output "aro_kubeconfig_out" {
-  value = base64decode(jsondecode(data.azapi_resource_action.aro_kubeconfig.output).kubeconfig)
-  sensitive=true
+  value     = base64decode(jsondecode(data.azapi_resource_action.aro_kubeconfig.output).kubeconfig)
+  sensitive = true
 }
 
 output "aro_admin_pass" {
-  value = jsondecode(data.azapi_resource_action.aro_adminlogin.output).kubeadminPassword
-  sensitive=true
+  value     = jsondecode(data.azapi_resource_action.aro_adminlogin.output).kubeadminPassword
+  sensitive = true
 }
 output "aro_admin_login" {
   value = jsondecode(data.azapi_resource_action.aro_adminlogin.output).kubeadminUsername
