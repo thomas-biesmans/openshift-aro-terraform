@@ -93,7 +93,7 @@ resource "azurerm_redhat_openshift_cluster" "aro_cluster" {
   tags                = local.tags
 
   cluster_profile {
-    domain  = var.openshift["domain"]
+    domain  = "${var.openshift["cluster_name"]}.${var.openshift["cluster_domain"]}"
     version = var.openshift["version"]
     # required to get the operator to worker
     # which is import for the kasten operator
@@ -112,11 +112,11 @@ resource "azurerm_redhat_openshift_cluster" "aro_cluster" {
   }
 
   api_server_profile {
-    visibility = "Public"
+    visibility = var.openshift["api_visibility"]
   }
 
   ingress_profile {
-    visibility = "Public"
+    visibility = var.openshift["ingress_visibility"]
   }
 
   worker_profile {
@@ -136,7 +136,6 @@ resource "azurerm_redhat_openshift_cluster" "aro_cluster" {
     azurerm_role_assignment.role_network2,
   ]
 
-
 }
 
 # az aro get-admin-kubeconfig --name MyCluster --resource-group MyResourceGroup --debug
@@ -146,10 +145,6 @@ data "azapi_resource_action" "aro_kubeconfig" {
   resource_id            = azurerm_redhat_openshift_cluster.aro_cluster.id
   action                 = "listAdminCredentials"
   response_export_values = ["*"]
-
-  depends_on = [
-    azurerm_redhat_openshift_cluster.aro_cluster
-  ]
 }
 
 # az aro list-credentials  --name cluster  --resource-group aro-rg --debug
@@ -159,8 +154,29 @@ data "azapi_resource_action" "aro_adminlogin" {
   resource_id            = azurerm_redhat_openshift_cluster.aro_cluster.id
   action                 = "listCredentials"
   response_export_values = ["*"]
+}
 
-  depends_on = [
-    azurerm_redhat_openshift_cluster.aro_cluster
-  ]
+# az aro list  --name cluster  --resource-group aro-rg --debug
+# the date might change if there is an update in the api
+data "azapi_resource" "aro_details" {
+  type                   = "Microsoft.RedHatOpenShift/openShiftClusters@2023-09-04"
+  resource_id            = azurerm_redhat_openshift_cluster.aro_cluster.id
+  response_export_values = ["*"]
+}
+
+
+resource "azurerm_dns_a_record" "api_server" {
+  name                = "api.${var.openshift["cluster_name"]}"
+  zone_name           = var.azure_dns_zone["name"]
+  resource_group_name = var.azure_dns_zone["rg"]
+  ttl                 = 300
+  records             = [jsondecode(data.azapi_resource.aro_details.output).properties.apiserverProfile.ip]
+}
+
+resource "azurerm_dns_a_record" "apps_wildcard" {
+  name                = "*.apps.${var.openshift["cluster_name"]}"
+  zone_name           = var.azure_dns_zone["name"]
+  resource_group_name = var.azure_dns_zone["rg"]
+  ttl                 = 300
+  records             = [jsondecode(data.azapi_resource.aro_details.output).properties.ingressProfiles[0].ip]
 }

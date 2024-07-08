@@ -23,6 +23,14 @@ output "aro_admin_login" {
   value = jsondecode(data.azapi_resource_action.aro_adminlogin.output).kubeadminUsername
 }
 
+output "aro_api_ip" {
+  value = jsondecode(data.azapi_resource.aro_details.output).properties.apiserverProfile.ip
+}
+output "aro_ingress_ip" {
+  value = jsondecode(data.azapi_resource.aro_details.output).properties.ingressProfiles[0].ip
+}
+
+
 output "console_url" {
   value = azurerm_redhat_openshift_cluster.aro_cluster.console_url
 }
