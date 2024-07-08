@@ -2,15 +2,12 @@ locals {
   aro_kubeconfig = yamldecode(base64decode(jsondecode(data.azapi_resource_action.aro_kubeconfig.output).kubeconfig))
 }
 
-
-
 provider "kubernetes" {
   host                   = local.aro_kubeconfig.clusters[0].cluster.server
   client_certificate     = base64decode(local.aro_kubeconfig.users[0].user.client-certificate-data)
   client_key             = base64decode(local.aro_kubeconfig.users[0].user.client-key-data)
   cluster_ca_certificate = ""
 }
-
 
 provider "helm" {
   kubernetes {
@@ -21,8 +18,7 @@ provider "helm" {
   }
 }
 
-
-resource "kubernetes_namespace" "kastenions" {
+resource "kubernetes_namespace" "openshift-kastenio" {
   depends_on = [data.azapi_resource_action.aro_kubeconfig, azurerm_redhat_openshift_cluster.aro_cluster]
 
   metadata {
@@ -40,9 +36,7 @@ resource "kubernetes_namespace" "kastenions" {
       metadata[0].annotations["openshift.io/sa.scc.uid-range"]
     ]
   }
-
 }
-
 
 resource "kubernetes_namespace" "hr" {
   depends_on = [data.azapi_resource_action.aro_kubeconfig, azurerm_redhat_openshift_cluster.aro_cluster]
@@ -62,9 +56,7 @@ resource "kubernetes_namespace" "hr" {
       metadata[0].annotations["openshift.io/sa.scc.uid-range"]
     ]
   }
-
 }
-
 
 resource "kubernetes_namespace" "stock" {
   depends_on = [data.azapi_resource_action.aro_kubeconfig, azurerm_redhat_openshift_cluster.aro_cluster]
@@ -209,7 +201,6 @@ resource "kubernetes_deployment" "stock-deploy" {
     }
   }
 }
-
 
 resource "kubernetes_service" "stock-demo-svc" {
   depends_on = [kubernetes_namespace.stock]
