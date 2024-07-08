@@ -7,6 +7,7 @@ provider "kubernetes" {
   client_certificate     = base64decode(local.aro_kubeconfig.users[0].user.client-certificate-data)
   client_key             = base64decode(local.aro_kubeconfig.users[0].user.client-key-data)
   cluster_ca_certificate = ""
+  insecure               = true
 }
 
 provider "helm" {
