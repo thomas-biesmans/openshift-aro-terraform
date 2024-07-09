@@ -3,6 +3,10 @@
 
 resource "azurerm_resource_provider_registration" "reg-aro" {
   name = "Microsoft.RedHatOpenShift"
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 
@@ -146,6 +150,12 @@ data "azapi_resource_action" "aro_kubeconfig" {
   action                 = "listAdminCredentials"
   response_export_values = ["*"]
 }
+
+# resource "local_file" "kubeconfig" {
+#   depends_on = [azapi_resource_action.aro_kubeconfig]
+#   filename   = var.kubeconfig_location
+#   content    = base64decode(jsondecode(data.azapi_resource_action.aro_kubeconfig.output).kubeconfig)
+# }
 
 # az aro list-credentials  --name cluster  --resource-group aro-rg --debug
 # the date might change if there is an update in the api

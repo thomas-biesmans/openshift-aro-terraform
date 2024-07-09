@@ -1,47 +1,4 @@
-locals {
-  aro_kubeconfig = yamldecode(base64decode(jsondecode(data.azapi_resource_action.aro_kubeconfig.output).kubeconfig))
-}
-
-provider "kubernetes" {
-  host                   = local.aro_kubeconfig.clusters[0].cluster.server
-  client_certificate     = base64decode(local.aro_kubeconfig.users[0].user.client-certificate-data)
-  client_key             = base64decode(local.aro_kubeconfig.users[0].user.client-key-data)
-  cluster_ca_certificate = ""
-  insecure               = true
-}
-
-provider "helm" {
-  kubernetes {
-    host                   = local.aro_kubeconfig.clusters[0].cluster.server
-    client_certificate     = base64decode(local.aro_kubeconfig.users[0].user.client-certificate-data)
-    client_key             = base64decode(local.aro_kubeconfig.users[0].user.client-key-data)
-    cluster_ca_certificate = ""
-  }
-}
-
-resource "kubernetes_namespace" "openshift-kastenio" {
-  depends_on = [data.azapi_resource_action.aro_kubeconfig, azurerm_redhat_openshift_cluster.aro_cluster]
-
-  metadata {
-    name = "kasten-io"
-
-    labels = {
-      prodlevel = "backup"
-    }
-  }
-
-  lifecycle {
-    ignore_changes = [
-      metadata[0].annotations["openshift.io/sa.scc.mcs"],
-      metadata[0].annotations["openshift.io/sa.scc.supplemental-groups"],
-      metadata[0].annotations["openshift.io/sa.scc.uid-range"]
-    ]
-  }
-}
-
 resource "kubernetes_namespace" "hr" {
-  depends_on = [data.azapi_resource_action.aro_kubeconfig, azurerm_redhat_openshift_cluster.aro_cluster]
-
   metadata {
     name = "hr"
 
@@ -60,8 +17,6 @@ resource "kubernetes_namespace" "hr" {
 }
 
 resource "kubernetes_namespace" "stock" {
-  depends_on = [data.azapi_resource_action.aro_kubeconfig, azurerm_redhat_openshift_cluster.aro_cluster]
-
   metadata {
     name = "stock"
 
@@ -115,7 +70,7 @@ resource "kubernetes_config_map" "stockcm" {
   }
 
   data = {
-    "initinsert.psql" = "${file("${path.module}/initinsert.psql")}"
+    "initinsert.psql" = data.local_file.initinsert.content
   }
 }
 
@@ -229,3 +184,34 @@ resource "kubernetes_service" "stock-demo-svc" {
   }
 }
 
+resource "kubernetes_manifest" "stockroute" {
+  manifest = {
+    apiVersion = "route.openshift.io/v1"
+    kind       = "Route"
+
+    metadata = {
+      labels = {
+        app = "stock-demo"
+      }
+      name      = "stock-route"
+      namespace = kubernetes_namespace.stock.metadata[0].name
+    }
+    spec = {
+      path = "/"
+      to = {
+        kind   = "Service"
+        name   = "stock-demo-svc"
+        weight = "100"
+      }
+      port = {
+        targetPort = "http"
+      }
+
+      tls = {
+        termination = "edge"
+      }
+
+      wildcardPolicy = "None"
+    }
+  }
+}
