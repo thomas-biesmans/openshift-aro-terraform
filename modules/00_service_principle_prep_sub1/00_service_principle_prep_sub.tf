@@ -38,4 +38,5 @@ resource "local_file" "service_principle_details" {
     client_secret   = azuread_service_principal_password.sp_pw_aro.value
     role            = azurerm_role_assignment.sp_aro_contributor.role_definition_id 
   })
+  file_permission = "0600"
 }
