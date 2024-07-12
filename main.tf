@@ -16,10 +16,15 @@ locals {
   credentials_svp_sub2 = jsondecode(file("${path.module}/input-files/azurerm-creds/svp_sub2.cred"))
 }
 
+# current subscription you're logged in with
+provider "azurerm" {
+  features {}
+}
+
 # First subscription that hosts ARO
 provider "azurerm" {
   features {}
-  # alias           = "primary"
+  alias           = "primary"
   client_id       = local.credentials_svp_sub1.client_id
   client_secret   = local.credentials_svp_sub1.client_secret
   tenant_id       = local.credentials_svp_sub1.tenant_id
@@ -63,7 +68,6 @@ module "azure_svp_sub1_creation" {
 
   providers = {
     azurerm = azurerm
-    # azurerm = azurerm.primary
   }
 
   azlocation = var.azlocation
@@ -79,7 +83,7 @@ module "azure_svp_sub2_creation" {
   source = "./modules/00_service_principle_prep_sub2"
 
   providers = {
-    azurerm = azurerm.secondary
+    azurerm = azurerm
   }
 
   azlocation = var.azlocation
@@ -94,8 +98,7 @@ module "aro" {
   source = "./modules/10_aro"
 
   providers = {
-    azurerm = azurerm,
-    # azurerm.primary   = azurerm.primary,
+    azurerm = azurerm.primary,
     azurerm.secondary = azurerm.secondary
   }
 
