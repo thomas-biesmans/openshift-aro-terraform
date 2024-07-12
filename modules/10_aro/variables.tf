@@ -1,51 +1,10 @@
 # Azure variables
 
-variable "azlocation" {
-  default     = "westeurope"
-  description = "Location of the resource group."
-}
-
-variable "ownerref" {
-  type        = string
-  default     = "thbie"
-  description = "Owner of the project short name for naming resources or login"
-}
-
-variable "owneremail" {
-  type        = string
-  default     = "thomas.biesmans@inetum-realdolmen.world"
-  description = "Owner of the project email"
-}
-
-variable "project" {
-  type        = string
-  default     = "aro-kasten-test"
-  description = "project name"
-}
-
-variable "activity" {
-  type        = string
-  default     = "demo"
-  description = "activity"
-}
-
 variable "azure_dns_zone" {
   type = map(string)
   default = {
     name = "donisaurs.be" # Name of the DNS zone
     rg   = "DNS_RG"       # Resource Group name of the DNS zone
-  }
-}
-
-locals {
-  projectname = format("%s-%s", var.ownerref, var.project)
-  domain      = format("%s%s", var.ownerref, var.project)
-
-
-  tags = {
-    owner    = var.owneremail
-    activity = var.activity
-    project  = var.project
   }
 }
 
@@ -77,4 +36,58 @@ variable "pull_secret_location" {
 
 data "local_file" "pull_secret" {
   filename = "${path.module}/${var.pull_secret_location}"
+}
+
+
+# Inherited variables
+
+variable "azlocation" {
+  description = "Location of the resource group."
+}
+
+variable "ownerref" {
+  type        = string
+  description = "Owner of the project short name for naming resources or login"
+}
+
+variable "owneremail" {
+  type        = string
+  description = "Owner of the project email"
+}
+
+variable "project" {
+  type        = string
+  description = "project name"
+}
+
+variable "activity" {
+  type        = string
+  description = "activity"
+}
+
+variable "svp_sub1_client_id" {
+  type        = string
+  description = "ID for Service Principle in subscription 1 for ARO"
+}
+
+variable "svp_sub1_client_secret" {
+  type        = string
+  description = "Secret for Service Principle in subscription 1 for ARO"
+}
+
+# variable "svp_sub2_client_id" {
+#   type        = string
+#   description = "Service Principle in subscription 2 for Azure DNS"
+# }
+
+locals {
+  projectname = format("%s-%s", var.project, var.ownerref)
+  domain      = format("%s%s", var.project, var.ownerref)
+
+
+  tags = {
+    owner    = var.owneremail
+    activity = var.activity
+    project  = var.project
+  }
 }

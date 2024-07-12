@@ -1,37 +1,9 @@
 
 # Registering provider for Azure Red Hat OpenShift - Default will skip provider registration
+# Alternative: az provider register --namespace Microsoft.RedHatOpenShift
 
 resource "azurerm_resource_provider_registration" "reg-aro" {
   name = "Microsoft.RedHatOpenShift"
-
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
-
-# Configuring the Azure provider
-
-data "azuread_client_config" "current" {
-
-}
-
-data "azurerm_client_config" "current" {
-
-}
-
-resource "azuread_application" "app_aro" {
-  display_name = "${local.projectname}-aro-with-owner"
-  owners       = [data.azuread_client_config.current.object_id]
-}
-
-resource "azuread_service_principal" "sp_aro" {
-  client_id = azuread_application.app_aro.client_id
-  owners    = [data.azuread_client_config.current.object_id]
-}
-
-resource "azuread_service_principal_password" "sp_pw_aro" {
-  service_principal_id = azuread_service_principal.sp_aro.object_id
 }
 
 # also here :
@@ -49,7 +21,7 @@ data "azuread_service_principal" "redhatopenshift" {
 resource "azurerm_role_assignment" "role_network1" {
   scope                = azurerm_virtual_network.aro_vnet.id
   role_definition_name = "Network Contributor"
-  principal_id         = azuread_service_principal.sp_aro.object_id
+  principal_id         = var.svp_sub1_client_id # data.azuread_service_principal.sp_aro.object_id
 }
 
 resource "azurerm_role_assignment" "role_network2" {
@@ -97,8 +69,9 @@ resource "azurerm_redhat_openshift_cluster" "aro_cluster" {
   tags                = local.tags
 
   cluster_profile {
-    domain  = "${var.openshift["cluster_name"]}.${var.openshift["cluster_domain"]}"
+    domain  = var.openshift["cluster_full_domain"]
     version = var.openshift["version"]
+
     # required to get the operator to worker
     # which is import for the kasten operator
     # https://console.redhat.com/openshift/install/azure/aro-provisioned
@@ -131,8 +104,8 @@ resource "azurerm_redhat_openshift_cluster" "aro_cluster" {
   }
 
   service_principal {
-    client_id     = azuread_application.app_aro.client_id
-    client_secret = azuread_service_principal_password.sp_pw_aro.value
+    client_id     = var.svp_sub1_client_id
+    client_secret = var.svp_sub1_client_secret
   }
 
   depends_on = [
@@ -172,21 +145,4 @@ data "azapi_resource" "aro_details" {
   type                   = "Microsoft.RedHatOpenShift/openShiftClusters@2023-09-04"
   resource_id            = azurerm_redhat_openshift_cluster.aro_cluster.id
   response_export_values = ["*"]
-}
-
-
-resource "azurerm_dns_a_record" "api_server" {
-  name                = "api.${var.openshift["cluster_name"]}"
-  zone_name           = var.azure_dns_zone["name"]
-  resource_group_name = var.azure_dns_zone["rg"]
-  ttl                 = 300
-  records             = [jsondecode(data.azapi_resource.aro_details.output).properties.apiserverProfile.ip]
-}
-
-resource "azurerm_dns_a_record" "apps_wildcard" {
-  name                = "*.apps.${var.openshift["cluster_name"]}"
-  zone_name           = var.azure_dns_zone["name"]
-  resource_group_name = var.azure_dns_zone["rg"]
-  ttl                 = 300
-  records             = [jsondecode(data.azapi_resource.aro_details.output).properties.ingressProfiles[0].ip]
 }

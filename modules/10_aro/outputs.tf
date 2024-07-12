@@ -35,18 +35,6 @@ output "azurerm_resource_group_out" {
   value = azurerm_resource_group.aro_rg
 }
 
-output "azlocation_out" {
-  value = var.azlocation
-}
-
-output "ownerref_out" {
-  value = var.ownerref
-}
-
-output "owneremail_out" {
-  value = var.owneremail
-}
-
 data "azurerm_subscription" "current" {
 }
 

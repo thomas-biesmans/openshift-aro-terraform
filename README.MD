@@ -1,3 +1,12 @@
+# Log into Azure
+```
+az login 
+```
+Use : ```--use-device-code ``` if you're using a remote session.
+
+Select the subscription you want to deploy in.
+
+
 # Figure out support locations
 ```
 az account list-locations | jq '.[] | .name,.displayName'
@@ -11,6 +20,24 @@ Which is import for installing operators for installing Kasten K10
 https://console.redhat.com/openshift/install/azure/aro-provisioned
 
 default path is "../pull-secret.txt"
+
+Init
+```bash
+terraform init
+```
+
+
+terraform apply -target=module.azure_svp_sub1_creation[0].local_file.service_principle_details -var="azure_svp_creation=true"
+terraform apply -target=module.azure_svp_sub2_creation[0].local_file.service_principle_details -var="azure_svp_creation=true"
+
+Prefix with 'noglob' if you are using ```zsh``` on Linux.
+--auto-approve 
+
+
+
+
+
+
 
 Apply
 ```bash
