@@ -69,7 +69,7 @@ resource "azurerm_redhat_openshift_cluster" "aro_cluster" {
   tags                = local.tags
 
   cluster_profile {
-    domain  = var.openshift["cluster_full_domain"]
+    domain  = "${var.openshift["cluster_name"]}.${var.openshift["cluster_domain"]}"
     version = var.openshift["version"]
 
     # required to get the operator to worker

@@ -1,5 +1,5 @@
 locals {
-  aro_kubeconfig = yamldecode(module.aro[0].aro_kubeconfig_out)
+  aro_kubeconfig = yamldecode(module.aro.aro_kubeconfig_out)
 
   modified_clusters_yaml = [for cluster in local.aro_kubeconfig.clusters : merge(cluster, { cluster = merge(
     { insecure-skip-tls-verify = true },
@@ -11,10 +11,26 @@ locals {
     { clusters = local.modified_clusters_yaml }
   )
 
+  credentials_svp_sub1_filename = "${path.module}/input-files/azurerm-creds/svp_sub1.cred"
+  credentials_svp_sub2_filename = "${path.module}/input-files/azurerm-creds/svp_sub2.cred"
 
-  credentials_svp_sub1 = jsondecode(file("${path.module}/input-files/azurerm-creds/svp_sub1.cred"))
-  credentials_svp_sub2 = jsondecode(file("${path.module}/input-files/azurerm-creds/svp_sub2.cred"))
 }
+
+data "local_sensitive_file" "credentials_svp_sub1" {
+  count = fileexists(local.credentials_svp_sub1_filename) ? 1 : 0
+  filename = local.credentials_svp_sub1_filename
+}
+
+data "local_sensitive_file" "credentials_svp_sub2" {
+  count = fileexists(local.credentials_svp_sub2_filename) ? 1 : 0
+  filename = local.credentials_svp_sub2_filename
+}
+
+locals {
+  credentials_svp_sub1 =  jsondecode(one(data.local_sensitive_file.credentials_svp_sub1[*].content))
+  credentials_svp_sub2 =  jsondecode(one(data.local_sensitive_file.credentials_svp_sub2[*].content))
+}
+
 
 # current subscription you're logged in with
 provider "azurerm" {
@@ -116,8 +132,8 @@ module "aro" {
 module "kasten" {
   source = "./modules/20_kasten"
 
-  azurerm_resource_group = module.aro[0].azurerm_resource_group_out
-  aro_kubeconfig         = module.aro[0].aro_kubeconfig_out
+  azurerm_resource_group = module.aro.azurerm_resource_group_out
+  aro_kubeconfig         = module.aro.aro_kubeconfig_out
   ownerref               = var.ownerref
   owneremail             = var.owneremail
 

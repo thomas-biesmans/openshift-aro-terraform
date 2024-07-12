@@ -1,6 +1,5 @@
 
 resource "azurerm_dns_a_record" "api_server" {
-  count               = var.openshift["cluster_name"] ? "" : 0
   name                = "api.${var.openshift["cluster_name"]}"
   zone_name           = var.azure_dns_zone["name"]
   resource_group_name = var.azure_dns_zone["rg"]
@@ -11,7 +10,6 @@ resource "azurerm_dns_a_record" "api_server" {
 }
 
 resource "azurerm_dns_a_record" "apps_wildcard" {
-  count               = var.openshift["cluster_name"] ? "" : 0
   name                = "*.apps.${var.openshift["cluster_name"]}"
   zone_name           = var.azure_dns_zone["name"]
   resource_group_name = var.azure_dns_zone["rg"]
