@@ -184,34 +184,60 @@ resource "kubernetes_service" "stock-demo-svc" {
   }
 }
 
-resource "kubernetes_manifest" "stockroute" {
-  manifest = {
-    apiVersion = "route.openshift.io/v1"
-    kind       = "Route"
+# resource "kubernetes_manifest" "stockroute" {
+#   depends_on = [kubernetes_namespace.stock]
+#   manifest = {
+#     apiVersion = "route.openshift.io/v1"
+#     kind       = "Route"
+# 
+#     metadata = {
+#       labels = {
+#         app = "stock-demo"
+#       }
+#       name      = "stock-route"
+#       namespace = kubernetes_namespace.stock.metadata[0].name
+#     }
+#     spec = {
+#       path = "/"
+#       to = {
+#         kind   = "Service"
+#         name   = "stock-demo-svc"
+#         weight = "100"
+#       }
+#       port = {
+#         targetPort = "http"
+#       }
+# 
+#       tls = {
+#         termination = "edge"
+#       }
+# 
+#       wildcardPolicy = "None"
+#     }
+#   }
+# }
 
-    metadata = {
-      labels = {
-        app = "stock-demo"
-      }
-      name      = "stock-route"
-      namespace = kubernetes_namespace.stock.metadata[0].name
-    }
-    spec = {
-      path = "/"
-      to = {
-        kind   = "Service"
-        name   = "stock-demo-svc"
-        weight = "100"
-      }
-      port = {
-        targetPort = "http"
-      }
-
-      tls = {
-        termination = "edge"
-      }
-
-      wildcardPolicy = "None"
-    }
-  }
+# Can't use kubernetes_manifest, because it queries the cluster for the type, so YAML-based kubectl_manifest instead
+resource "kubectl_manifest" "stockroute" {
+  depends_on = [kubernetes_namespace.stock]
+  yaml_body = <<YAML
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  labels:
+    app: "stock-demo"
+  name: "stock-route"
+  namespace: kubernetes_namespace.stock.metadata[0].name
+spec:
+  path: /
+  to:
+    kind: Service
+    name: stock-demo-svc
+    weight: 100
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+  wildcardPolicy: None
+YAML
 }

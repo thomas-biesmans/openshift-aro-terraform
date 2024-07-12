@@ -77,7 +77,9 @@ provider "helm" {
   }
 }
 
+
 # Deploying Azure Service Principals in our first subscription
+
 module "azure_svp_sub1_creation" {
   count  = var.azure_svp_creation ? 1 : 0
   source = "./modules/00_service_principle_prep_sub1"
@@ -93,7 +95,9 @@ module "azure_svp_sub1_creation" {
   activity   = var.activity
 }
 
+
 # Deploying Azure Service Principals in our second subscription
+
 module "azure_svp_sub2_creation" {
   count  = var.azure_svp_creation ? 1 : 0
   source = "./modules/00_service_principle_prep_sub2"
@@ -109,7 +113,9 @@ module "azure_svp_sub2_creation" {
   activity   = var.activity
 }
 
+
 # Deploying Azure Red Hat OpenShift / ARO
+
 module "aro" {
   source = "./modules/10_aro"
 
@@ -128,7 +134,9 @@ module "aro" {
   svp_sub1_client_secret = local.credentials_svp_sub1.client_secret
 }
 
+
 # Deploying Kasten & a sample app to be backed up
+
 module "kasten" {
   source = "./modules/20_kasten"
 
