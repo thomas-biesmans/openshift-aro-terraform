@@ -28,7 +28,7 @@ resource "local_file" "service_principle_details" {
   content = jsonencode({
     tenant_id       = data.azuread_client_config.current.tenant_id
     subscription_id = data.azurerm_client_config.current.subscription_id
-    client_id       = azuread_application.app_aro.application_id # azuread_service_principal.sp_aro.client_id
+    client_id       = azuread_application.app_aro.client_id
     client_secret   = azuread_service_principal_password.sp_pw_aro.value
   })
 }
