@@ -10,7 +10,7 @@ data "azurerm_client_config" "current" {
 }
 
 resource "azuread_application" "app_aro_dns" {
-  display_name = "${local.projectname}-aro-with-owner"
+  display_name = "${local.projectname}-dns"
   owners       = [data.azuread_client_config.current.object_id]
 }
 

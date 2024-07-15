@@ -10,7 +10,7 @@ data "azurerm_client_config" "current" {
 }
 
 resource "azuread_application" "app_aro" {
-  display_name = "${local.projectname}-aro-with-owner"
+  display_name = "${local.projectname}-aro"
   owners       = [data.azuread_client_config.current.object_id]
 }
 
@@ -75,14 +75,20 @@ data "azuread_service_principal" "redhatopenshift" {
   depends_on = [null_resource.reg_aro]
 }
 
+
+# Ideally the below permissions are set on the vnet you'll be using, but in our Service Principal approach the Service Principal does not have
+# the proper permissions to create this role when the ARO cluster is deployed, unless you create the Resource Groups (and possibly the vnets) in
+# this module as well.
+# In the meantime we'll just grant Network Contributor to the subscription.
+
 resource "azurerm_role_assignment" "role_network_own_svp" {
-  scope                = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourcegroups/${local.projectname}-aro-rg" # azurerm_virtual_network.aro_vnet.id
+  scope                = "/subscriptions/${data.azurerm_client_config.current.subscription_id}" # /resourcegroups/${local.projectname}-aro-rg" # azurerm_virtual_network.aro_vnet.id
   role_definition_name = "Network Contributor"
   principal_id         = azuread_service_principal.sp_aro.object_id
 }
 
 resource "azurerm_role_assignment" "role_network_external_redhat_svp" {
-  scope                = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourcegroups/${local.projectname}-aro-rg" # azurerm_virtual_network.aro_vnet.id
+  scope                = "/subscriptions/${data.azurerm_client_config.current.subscription_id}" #/resourcegroups/${local.projectname}-aro-rg" # azurerm_virtual_network.aro_vnet.id
   role_definition_name = "Network Contributor"
   principal_id         = data.azuread_service_principal.redhatopenshift.object_id
 }

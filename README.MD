@@ -66,32 +66,31 @@ terraform -chdir=10_aro_deploy init
 terraform -chdir=10_aro_deploy apply
 ```
 
-
-
-
-
-
-Get Kubeconfig
+Get Kubeconfig:
 ```bash
-terraform output -raw  aro_kubeconfig_out > ~/.kube/config
+terraform -chdir=10_aro_deploy output -raw aro_kubeconfig_out > ~/.kube/config
 ```
 
-Get login
+Get login:
 ```bash
-terraform output -raw console_url
-terraform output -raw aro_admin_login
+terraform -chdir=10_aro_deploy output -raw console_url
+terraform -chdir=10_aro_deploy output -raw aro_admin_login
 #terraform output -raw aro_admin_pass 
 ```
 
-On MAC you can copy the password to your clipboard with pbcopy
+On MAC you can copy the password to your clipboard with pbcopy:
 ```zsh
 open $(terraform output -raw console_url)
 terraform output -raw aro_admin_pass | pbcopy
 ```
 
-# Storage Account for Kasten K10
-Get Storage Account
+## Azure Red Hat OpenShift - ARO - configuration
 
+This includes:
+- Kasten deployment
+
+
+Get Storage Account
 ```bash
 terraform output -raw storageaccount
 #terraform output -raw storageaccount_ak 
