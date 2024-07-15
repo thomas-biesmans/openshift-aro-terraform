@@ -1,0 +1,19 @@
+azure:
+  azlocation: westeurope
+  ownerref: thbie
+  owneremail: thomas.biesmans@inetum-realdolmen.world
+  project: az-we-lab-aro-kasten
+  activity: demo
+  az_resource_providers:
+  - Microsoft.RedHatOpenShift
+openshift:
+  version: 4.14.16                # Version running on the cluster, available versions found through 'az aro get-versions --location "westeurope\"'
+  cluster_name: arotest           # Cluster's name
+  cluster_domain: donisaurs.be    # Domain to be used for the cluster
+  main_vm_size: Standard_D8s_v4   # CPU family for the control nodes, minimally Standard_D8s_v3
+  worker_vm_size: Standard_D4s_v4 # CPU family for the worker nodes, minimally Standard_D4s_v3
+  worker_disk_size: 128           # Worker node disk size
+  worker_node_count: 3            # Worker node count
+  api_visibility: Public          # Whether the API endpoint is publicly available
+  ingress_visibility: Public      # Whether the ingress or *.apps endpoint is publicly available
+ 

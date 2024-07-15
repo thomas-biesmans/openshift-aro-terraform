@@ -82,7 +82,7 @@ provider "helm" {
 
 module "azure_svp_sub1_creation" {
   count  = var.azure_svp_creation ? 1 : 0
-  source = "./modules/00_service_principle_prep_sub1"
+  source = "./modules/00_serviceprincipal_prep_sub1"
 
   providers = {
     azurerm = azurerm
@@ -100,7 +100,7 @@ module "azure_svp_sub1_creation" {
 
 module "azure_svp_sub2_creation" {
   count  = var.azure_svp_creation ? 1 : 0
-  source = "./modules/00_service_principle_prep_sub2"
+  source = "./modules/00_serviceprincipal_prep_sub2"
 
   providers = {
     azurerm = azurerm

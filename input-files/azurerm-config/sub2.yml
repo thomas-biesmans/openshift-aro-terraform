@@ -1,0 +1,3 @@
+azure_dns:
+  domain_name: donisaurs.be   # Name of the DNS zone
+  resource_group_name: DNS_RG # Resource Group name of the DNS zone

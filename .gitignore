@@ -1,6 +1,7 @@
 # Local .terraform directories
 **/*.*
 !**/*.tf
+!**/*.yml
 !**/initinsert.psql
 pull-secret.txt
 

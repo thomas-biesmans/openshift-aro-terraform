@@ -1,7 +1,7 @@
 
 variable "secret_location_dir" {
   type    = string
-  default = "./input-files/azurerm-creds"
+  default = "./../input-files/azurerm-creds"
 }
 
 # Inherited variables
@@ -30,10 +30,15 @@ variable "activity" {
   description = "activity"
 }
 
+variable "az_resource_providers" {
+  type        = list(string)
+  description = "Resource Providers that should be registered to a subscription"
+}
+
+
 locals {
   projectname = format("%s-%s", var.project, var.ownerref)
   domain      = format("%s%s", var.project, var.ownerref)
-
 
   tags = {
     owner    = var.owneremail

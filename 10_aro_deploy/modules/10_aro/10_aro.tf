@@ -1,39 +1,15 @@
 
-# Registering provider for Azure Red Hat OpenShift - Default will skip provider registration
-# Alternative: az provider register --namespace Microsoft.RedHatOpenShift
-
-resource "azurerm_resource_provider_registration" "reg-aro" {
-  name = "Microsoft.RedHatOpenShift"
-}
-
-# also here :
+# Based on :
 # https://learn.microsoft.com/en-us/azure/openshift/quickstart-openshift-arm-bicep-template?pivots=aro-arm
 # https://cloud.redhat.com/experts/aro/terraform-install/
 # https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/redhat_openshift_cluster
-# az ad sp list --display-name 'Azure Red Hat OpenShift RP' --output json | jq '.[0]["servicePrincipalNames"]'
 
-data "azuread_service_principal" "redhatopenshift" {
-  # This is the Azure Red Hat OpenShift RP service principal id managed by Red Hat, do NOT delete it
-  client_id  = "f1dd0a37-89c6-4e07-bcd1-ffd3d43d8875"
-  depends_on = [azurerm_resource_provider_registration.reg-aro]
-}
-
-resource "azurerm_role_assignment" "role_network1" {
-  scope                = azurerm_virtual_network.aro_vnet.id
-  role_definition_name = "Network Contributor"
-  principal_id         = var.svp_sub1_client_id # data.azuread_service_principal.sp_aro.object_id
-}
-
-resource "azurerm_role_assignment" "role_network2" {
-  scope                = azurerm_virtual_network.aro_vnet.id
-  role_definition_name = "Network Contributor"
-  principal_id         = data.azuread_service_principal.redhatopenshift.object_id
-}
 
 resource "azurerm_resource_group" "aro_rg" {
   name     = "${local.projectname}-aro-rg"
   tags     = local.tags
   location = var.azlocation
+
 }
 
 resource "azurerm_virtual_network" "aro_vnet" {
@@ -42,6 +18,7 @@ resource "azurerm_virtual_network" "aro_vnet" {
   location            = azurerm_resource_group.aro_rg.location
   resource_group_name = azurerm_resource_group.aro_rg.name
   tags                = local.tags
+
 }
 
 resource "azurerm_subnet" "main_subnet" {
@@ -107,11 +84,6 @@ resource "azurerm_redhat_openshift_cluster" "aro_cluster" {
     client_id     = var.svp_sub1_client_id
     client_secret = var.svp_sub1_client_secret
   }
-
-  depends_on = [
-    azurerm_role_assignment.role_network1,
-    azurerm_role_assignment.role_network2,
-  ]
 
 }
 
