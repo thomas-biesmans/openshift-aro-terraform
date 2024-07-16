@@ -62,6 +62,7 @@ module "azure_serviceprincipal_prep_sub_aro" {
   project               = local.project
   activity              = local.activity
   az_resource_providers = local.az_resource_providers
+  secret_location_dir   = var.secret_location_dir
 }
 
 
@@ -79,4 +80,5 @@ module "azure_serviceprincipal_prep_sub_dns" {
   owneremail = local.owneremail
   project    = local.project
   activity   = local.activity
+  secret_location_dir   = var.secret_location_dir
 }

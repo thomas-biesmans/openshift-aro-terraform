@@ -1,7 +1,6 @@
 
 variable "secret_location_dir" {
   type    = string
-  default = "./../input-files/azurerm-creds"
 }
 
 # Inherited variables

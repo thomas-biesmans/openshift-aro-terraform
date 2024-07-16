@@ -47,3 +47,8 @@ variable "az_resource_providers" {
   default     = ["Microsoft.RedHatOpenShift"]
   description = "Resource Providers that should be registered to a subscription"
 }
+
+variable "secret_location_dir" {
+  type    = string
+  default = "./../input-files/azurerm-creds"
+}
