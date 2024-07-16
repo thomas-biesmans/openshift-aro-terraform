@@ -108,4 +108,7 @@ variable "pull_secret_location" {
   default = "./../../../input-files/OpenShift-pull-secret/pull-secret.txt"
 }
 
-
+variable "kubeconfig_location" {
+  type    = string
+  default = "./../working-files/kubeconfig_aro.txt"
+}

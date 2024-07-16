@@ -96,11 +96,11 @@ data "azapi_resource_action" "aro_kubeconfig" {
   response_export_values = ["*"]
 }
 
-# resource "local_file" "kubeconfig" {
-#   depends_on = [azapi_resource_action.aro_kubeconfig]
-#   filename   = var.kubeconfig_location
-#   content    = base64decode(jsondecode(data.azapi_resource_action.aro_kubeconfig.output).kubeconfig)
-# }
+resource "local_file" "kubeconfig" {
+  filename        = var.kubeconfig_location
+  content         = base64decode(jsondecode(data.azapi_resource_action.aro_kubeconfig.output).kubeconfig)
+  file_permission = "0600"
+}
 
 # az aro list-credentials  --name cluster  --resource-group aro-rg --debug
 # the date might change if there is an update in the api

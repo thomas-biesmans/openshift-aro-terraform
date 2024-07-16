@@ -71,3 +71,7 @@ variable "pull_secret_location" {
 data "local_file" "pull_secret" {
   filename = "${path.module}/${var.pull_secret_location}"
 }
+
+variable "kubeconfig_location" {
+  type    = string
+}
