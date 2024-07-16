@@ -75,10 +75,10 @@ module "azure_serviceprincipal_prep_sub_dns" {
     azurerm = azurerm
   }
 
-  azlocation = local.azlocation
-  ownerref   = local.ownerref
-  owneremail = local.owneremail
-  project    = local.project
-  activity   = local.activity
-  secret_location_dir   = var.secret_location_dir
+  azlocation          = local.azlocation
+  ownerref            = local.ownerref
+  owneremail          = local.owneremail
+  project             = local.project
+  activity            = local.activity
+  secret_location_dir = var.secret_location_dir
 }

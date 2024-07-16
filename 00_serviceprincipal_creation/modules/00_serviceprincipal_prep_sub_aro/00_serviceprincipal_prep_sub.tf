@@ -59,9 +59,9 @@ resource "null_resource" "reg_aro" {
 
   provisioner "local-exec" {
     command = <<EOT
-    %{ for resource_provider in var.az_resource_providers }
-      az provider register --namespace ${resource_provider }
-    %{ endfor }
+    %{for resource_provider in var.az_resource_providers}
+      az provider register --namespace ${resource_provider}
+    %{endfor}
     EOT
   }
 }

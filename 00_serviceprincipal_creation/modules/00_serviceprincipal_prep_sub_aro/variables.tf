@@ -1,6 +1,6 @@
 
 variable "secret_location_dir" {
-  type    = string
+  type = string
 }
 
 # Inherited variables
