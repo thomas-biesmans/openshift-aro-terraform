@@ -1,6 +1,6 @@
 locals {
-  credentials_svp_sub1_filename = "${path.module}/../input-files/azurerm-creds/svp_sub1.cred"
-  credentials_svp_sub2_filename = "${path.module}/../input-files/azurerm-creds/svp_sub2.cred"
+  credentials_svp_sub1_filename = "${path.root}./input-files/azurerm-creds/svp_sub1.cred"
+  credentials_svp_sub2_filename = "${path.root}./input-files/azurerm-creds/svp_sub2.cred"
 
 }
 

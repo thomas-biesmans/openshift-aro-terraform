@@ -2,7 +2,7 @@
 # Configuration parameters
 
 locals {
-  yaml_config_sub1 = yamldecode(file("${path.module}/../input-files/azurerm-config/sub1.yml"))
+  yaml_config_sub1 = yamldecode(file("${path.root}./input-files/azurerm-config/sub1.yml"))
 
   azlocation = local.yaml_config_sub1.azure != null ? lookup(local.yaml_config_sub1.azure, "azlocation", "") : var.azlocation
   ownerref   = local.yaml_config_sub1.azure != null ? lookup(local.yaml_config_sub1.azure, "ownerref", "") : var.ownerref
@@ -33,7 +33,7 @@ locals {
   }
 
 
-  yaml_config_sub2 = yamldecode(file("${path.module}/../input-files/azurerm-config/sub2.yml"))
+  yaml_config_sub2 = yamldecode(file("${path.root}./input-files/azurerm-config/sub2.yml"))
 
   azure_dns_zone = local.yaml_config_sub2.azure_dns != null ? {
     domain_name         = lookup(local.yaml_config_sub2.azure_dns, "domain_name", "")
@@ -103,12 +103,12 @@ variable "openshift" {
 # Make sure to get an OpenShift pull secret. This is required for deploying OpenShift.
 # https://console.redhat.com/openshift/install/azure/aro-provisioned
 
-variable "pull_secret_location" {
+variable "pull_secret_location_relative_to_root" {
   type    = string
-  default = "./../../../input-files/OpenShift-pull-secret/pull-secret.txt"
+  default = "./input-files/OpenShift-pull-secret/pull-secret.txt"
 }
 
-variable "kubeconfig_location" {
+variable "kubeconfig_location_relative_to_root" {
   type    = string
-  default = "./../working-files/kubeconfig_aro.txt"
+  default = "./working-files/kubeconfig_aro.txt"
 }

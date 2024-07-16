@@ -2,7 +2,7 @@
 # Configuration parameters
 
 locals {
-  yaml_config_sub1 = yamldecode(file("${path.module}/../input-files/azurerm-config/sub1.yml"))
+  yaml_config_sub1 = yamldecode(file("${path.root}./input-files/azurerm-config/sub1.yml"))
 
   azlocation            = local.yaml_config_sub1.azure != null ? lookup(local.yaml_config_sub1.azure, "azlocation", "") : var.azlocation
   ownerref              = local.yaml_config_sub1.azure != null ? lookup(local.yaml_config_sub1.azure, "ownerref", "") : var.ownerref
