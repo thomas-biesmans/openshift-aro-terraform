@@ -1,8 +1,28 @@
 
 # Configuration parameters
 
+variable "secret_location_dir_relative_to_cwd" {
+  type    = string
+  default = "./../input-files/azurerm-creds"
+}
+
+variable "config_location_dir_relative_to_cwd" {
+  type    = string
+  default = "./../input-files/azurerm-config"
+}
+
+variable "config_location_file_sub1" {
+  type    = string
+  default = "./sub1.yml"
+}
+
+variable "config_location_file_sub2" {
+  type    = string
+  default = "./sub2.yml"
+}
+
 locals {
-  yaml_config_sub1 = yamldecode(file("${path.root}./input-files/azurerm-config/sub1.yml"))
+  yaml_config_sub1 = yamldecode(file("${var.config_location_dir_relative_to_cwd}/${var.config_location_file_sub1}"))
 
   azlocation = local.yaml_config_sub1.azure != null ? lookup(local.yaml_config_sub1.azure, "azlocation", "") : var.azlocation
   ownerref   = local.yaml_config_sub1.azure != null ? lookup(local.yaml_config_sub1.azure, "ownerref", "") : var.ownerref
@@ -33,7 +53,7 @@ locals {
   }
 
 
-  yaml_config_sub2 = yamldecode(file("${path.root}./input-files/azurerm-config/sub2.yml"))
+  yaml_config_sub2 = yamldecode(file("${var.config_location_dir_relative_to_cwd}/${var.config_location_file_sub2}"))
 
   azure_dns_zone = local.yaml_config_sub2.azure_dns != null ? {
     domain_name         = lookup(local.yaml_config_sub2.azure_dns, "domain_name", "")
@@ -103,12 +123,12 @@ variable "openshift" {
 # Make sure to get an OpenShift pull secret. This is required for deploying OpenShift.
 # https://console.redhat.com/openshift/install/azure/aro-provisioned
 
-variable "pull_secret_location_relative_to_root" {
+variable "pull_secret_location_dir_relative_to_module" {
   type    = string
-  default = "./input-files/OpenShift-pull-secret/pull-secret.txt"
+  default = "./../../../input-files/OpenShift-pull-secret/pull-secret.txt"
 }
 
-variable "kubeconfig_location_relative_to_root" {
+variable "kubeconfig_location_relative_to_module" {
   type    = string
-  default = "./working-files/kubeconfig_aro.txt"
+  default = "./../../../working-files/kubeconfig_aro.txt"
 }

@@ -64,14 +64,14 @@ variable "openshift" {
   description = "OpenShift specifics"
 }
 
-variable "pull_secret_location_relative_to_root" {
+variable "pull_secret_location_dir_relative_to_module" {
   type = string
 }
 
 data "local_file" "pull_secret" {
-  filename = "${path.root}${var.pull_secret_location_relative_to_root}"
+  filename = "${path.module}/${var.pull_secret_location_dir_relative_to_module}"
 }
 
-variable "kubeconfig_location_relative_to_root" {
+variable "kubeconfig_location_relative_to_module" {
   type = string
 }

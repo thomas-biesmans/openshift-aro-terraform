@@ -97,7 +97,7 @@ data "azapi_resource_action" "aro_kubeconfig" {
 }
 
 resource "local_file" "kubeconfig" {
-  filename        = "${path.root}/${var.kubeconfig_location_relative_to_root}"
+  filename        = "${path.module}/${var.kubeconfig_location_relative_to_module}"
   content         = base64decode(jsondecode(data.azapi_resource_action.aro_kubeconfig.output).kubeconfig)
   file_permission = "0600"
 }
@@ -117,7 +117,7 @@ locals {
 }
 
 resource "local_file" "kubeconfig_insecure" {
-  filename        = "${path.root}/${replace(var.kubeconfig_location_relative_to_root, ".txt", "_insecure.txt")}"
+  filename        = "${path.module}/${replace(var.kubeconfig_location_relative_to_module, ".txt", "_insecure.txt")}"
   content         = yamlencode(local.modified_aro_kubeconfig)
   file_permission = "0600"
 }

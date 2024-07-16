@@ -11,8 +11,8 @@ locals {
     { clusters = local.modified_clusters_yaml }
   )
 
-  credentials_svp_sub1_filename = "${path.root}./input-files/azurerm-creds/svp_sub1.cred"
-  credentials_svp_sub2_filename = "${path.root}./input-files/azurerm-creds/svp_sub2.cred"
+  credentials_svp_sub1_filename = "${var.secret_location_dir_relative_to_cwd}/svp_sub1.cred"
+  credentials_svp_sub2_filename = "${var.secret_location_dir_relative_to_cwd}/svp_sub2.cred"
 
 }
 
@@ -82,7 +82,7 @@ module "aro" {
 
   openshift = local.openshift
 
-  pull_secret_location_relative_to_root = var.pull_secret_location_relative_to_root
-  kubeconfig_location_relative_to_root  = var.kubeconfig_location_relative_to_root
+  pull_secret_location_dir_relative_to_module = var.pull_secret_location_dir_relative_to_module
+  kubeconfig_location_relative_to_module      = var.kubeconfig_location_relative_to_module
 
 }

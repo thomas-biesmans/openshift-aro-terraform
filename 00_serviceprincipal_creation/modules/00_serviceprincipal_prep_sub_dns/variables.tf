@@ -1,5 +1,5 @@
 
-variable "secret_location_dir" {
+variable "secret_location_dir_relative_to_module" {
   type = string
 }
 

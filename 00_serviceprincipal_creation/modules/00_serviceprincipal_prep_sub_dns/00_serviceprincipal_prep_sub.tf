@@ -30,7 +30,7 @@ resource "azuread_service_principal_password" "sp_pw_aro_dns" {
 }
 
 resource "local_file" "serviceprincipal_details" {
-  filename = "${var.secret_location_dir}/svp_sub2.cred"
+  filename = "${path.module}/${var.secret_location_dir_relative_to_module}/svp_sub2.cred"
   content = jsonencode({
     tenant_id       = data.azuread_client_config.current.tenant_id
     subscription_id = data.azurerm_client_config.current.subscription_id

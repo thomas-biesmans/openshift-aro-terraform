@@ -36,7 +36,7 @@ resource "local_file" "serviceprincipal_details" {
     azurerm_role_assignment.role_network_external_redhat_svp
   ]
 
-  filename = "${var.secret_location_dir}/svp_sub1.cred"
+  filename = "${path.module}/${var.secret_location_dir_relative_to_module}/svp_sub1.cred"
   content = jsonencode({
     tenant_id       = data.azuread_client_config.current.tenant_id
     subscription_id = data.azurerm_client_config.current.subscription_id
