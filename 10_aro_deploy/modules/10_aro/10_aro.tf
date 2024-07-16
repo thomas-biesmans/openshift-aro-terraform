@@ -102,6 +102,26 @@ resource "local_file" "kubeconfig" {
   file_permission = "0600"
 }
 
+locals {
+  aro_kubeconfig = yamldecode(base64decode(jsondecode(data.azapi_resource_action.aro_kubeconfig.output).kubeconfig))
+
+  modified_clusters_yaml = [for cluster in local.aro_kubeconfig.clusters : merge(cluster, { cluster = merge(
+    { insecure-skip-tls-verify = true },
+    cluster.cluster
+  ) })]
+
+  modified_aro_kubeconfig = merge(
+    local.aro_kubeconfig,
+    { clusters = local.modified_clusters_yaml }
+  )
+}
+
+resource "local_file" "kubeconfig_insecure" {
+  filename        = replace(var.kubeconfig_location, ".txt", "_insecure.txt")
+  content         = yamlencode(local.modified_aro_kubeconfig)
+  file_permission = "0600"
+}
+
 # az aro list-credentials  --name cluster  --resource-group aro-rg --debug
 # the date might change if there is an update in the api
 data "azapi_resource_action" "aro_adminlogin" {
