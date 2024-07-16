@@ -60,12 +60,12 @@ variable "azure_dns_zone" {
 # OpenShift variables
 
 variable "openshift" {
-  type = map(string)
+  type        = map(string)
   description = "OpenShift specifics"
 }
 
 variable "pull_secret_location" {
-  type    = string
+  type = string
 }
 
 data "local_file" "pull_secret" {
@@ -73,5 +73,5 @@ data "local_file" "pull_secret" {
 }
 
 variable "kubeconfig_location" {
-  type    = string
+  type = string
 }

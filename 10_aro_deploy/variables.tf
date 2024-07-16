@@ -4,12 +4,12 @@
 locals {
   yaml_config_sub1 = yamldecode(file("${path.module}/../input-files/azurerm-config/sub1.yml"))
 
-  azlocation            = local.yaml_config_sub1.azure != null ? lookup(local.yaml_config_sub1.azure, "azlocation", "") : var.azlocation
-  ownerref              = local.yaml_config_sub1.azure != null ? lookup(local.yaml_config_sub1.azure, "ownerref", "") : var.ownerref
-  owneremail            = local.yaml_config_sub1.azure != null ? lookup(local.yaml_config_sub1.azure, "owneremail", "") : var.owneremail
-  project               = local.yaml_config_sub1.azure != null ? lookup(local.yaml_config_sub1.azure, "project", "") : var.project
-  activity              = local.yaml_config_sub1.azure != null ? lookup(local.yaml_config_sub1.azure, "activity", "") : var.activity
-  
+  azlocation = local.yaml_config_sub1.azure != null ? lookup(local.yaml_config_sub1.azure, "azlocation", "") : var.azlocation
+  ownerref   = local.yaml_config_sub1.azure != null ? lookup(local.yaml_config_sub1.azure, "ownerref", "") : var.ownerref
+  owneremail = local.yaml_config_sub1.azure != null ? lookup(local.yaml_config_sub1.azure, "owneremail", "") : var.owneremail
+  project    = local.yaml_config_sub1.azure != null ? lookup(local.yaml_config_sub1.azure, "project", "") : var.project
+  activity   = local.yaml_config_sub1.azure != null ? lookup(local.yaml_config_sub1.azure, "activity", "") : var.activity
+
   openshift = local.yaml_config_sub1.openshift != null ? {
     version            = lookup(local.yaml_config_sub1.openshift, "version", "")
     cluster_name       = lookup(local.yaml_config_sub1.openshift, "cluster_name", "")
@@ -17,10 +17,10 @@ locals {
     main_vm_size       = lookup(local.yaml_config_sub1.openshift, "main_vm_size", "")
     worker_vm_size     = lookup(local.yaml_config_sub1.openshift, "worker_vm_size", "")
     worker_disk_size   = lookup(local.yaml_config_sub1.openshift, "worker_disk_size", "")
-    worker_node_count  = lookup(local.yaml_config_sub1.openshift, "worker_node_count", "") 
+    worker_node_count  = lookup(local.yaml_config_sub1.openshift, "worker_node_count", "")
     api_visibility     = lookup(local.yaml_config_sub1.openshift, "api_visibility", "")
     ingress_visibility = lookup(local.yaml_config_sub1.openshift, "ingress_visibility", "")
-  } : {
+    } : {
     version            = var.openshift["version"]
     cluster_name       = var.openshift["cluster_name"]
     cluster_domain     = var.openshift["cluster_domain"]
@@ -38,7 +38,7 @@ locals {
   azure_dns_zone = local.yaml_config_sub2.azure_dns != null ? {
     domain_name         = lookup(local.yaml_config_sub2.azure_dns, "domain_name", "")
     resource_group_name = lookup(local.yaml_config_sub2.azure_dns, "resource_group_name", "")
-  } : {
+    } : {
     domain_name         = var.azure_dns_zone["domain_name"]
     resource_group_name = var.azure_dns_zone["resource_group_name"]
   }

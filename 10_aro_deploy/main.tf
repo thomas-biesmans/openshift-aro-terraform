@@ -83,6 +83,6 @@ module "aro" {
   openshift = local.openshift
 
   pull_secret_location = var.pull_secret_location
-  kubeconfig_location = var.kubeconfig_location
+  kubeconfig_location  = var.kubeconfig_location
 
 }
