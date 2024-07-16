@@ -9,7 +9,7 @@ resource "random_string" "randomsa" {
 }
 
 data "azurerm_resource_group" "aro_rg" {
-  name = var.azurerm_resource_group.name
+  name = "${local.projectname}-aro-rg"
 }
 
 resource "azurerm_storage_account" "sa" {
@@ -32,28 +32,18 @@ resource "azurerm_storage_container" "sacontainer" {
 
 # OpenShift
 
-resource "kubernetes_namespace" "kasten-io" {
+resource "kubernetes_namespace" "k10_operator" {
   metadata {
-    name = var.k10_namespace
-
-    labels = {
-      prodlevel = "backup"
-    }
+    name = var.k10_operator["namespace"]
   }
 
   lifecycle {
     ignore_changes = [
       metadata[0].annotations["openshift.io/sa.scc.mcs"],
       metadata[0].annotations["openshift.io/sa.scc.supplemental-groups"],
-      metadata[0].annotations["openshift.io/sa.scc.uid-range"]
+      metadata[0].annotations["openshift.io/sa.scc.uid-range"],
+      metadata[0].labels
     ]
-  }
-}
-
-
-resource "kubernetes_namespace" "k10_operator" {
-  metadata {
-    name = var.k10_operator["namespace"]
   }
 }
 
@@ -75,6 +65,7 @@ resource "kubernetes_manifest" "k10_operator_operatorgroup" {
 }
 
 resource "kubernetes_manifest" "k10_operator_subscription" {
+  depends_on = [kubernetes_manifest.k10_operator_operatorgroup]
   manifest = {
     "apiVersion" = "operators.coreos.com/v1alpha1"
     "kind"       = "Subscription"
@@ -105,32 +96,36 @@ resource "kubernetes_manifest" "k10_operator_subscription" {
   # }
 }
 
-resource "kubernetes_manifest" "k10_operator_csv" {
-  depends_on = [kubernetes_manifest.k10_operator_subscription]
-
-  manifest = {
-    "apiVersion" = "operators.coreos.com/v1alpha1"
-    "kind"       = "ClusterServiceVersion"
-    "metadata" = {
-      "name"      = var.k10_operator["startingCSV"]
-      "namespace" = var.k10_operator["namespace"]
-    }
-  }
-
-  wait {
-    fields = {
-      "status.phase" = "Succeeded"
-    }
-  }
-}
+# data "kubernetes_manifest" "k10_operator_csv" {
+#   depends_on = [kubernetes_manifest.k10_operator_subscription]
+# 
+#   manifest = {
+#     "apiVersion" = "operators.coreos.com/v1alpha1"
+#     "kind"       = "ClusterServiceVersion"
+#     "metadata" = {
+#       "name"      = var.k10_operator["startingCSV"]
+#       "namespace" = var.k10_operator["namespace"]
+#     }
+#     "spec" = {
+#       "displayName" = 
+#     }
+#   }
+# 
+#   wait {
+#     fields = {
+#       "status.phase" = "Succeeded"
+#     }
+#   }
+# }
 
 data "kubernetes_resources" "k10_operator_installplan" {
   depends_on = [kubernetes_manifest.k10_operator_subscription]
 
   api_version = "operators.coreos.com/v1alpha1"
   kind        = "InstallPlan"
-  field_selector = "metadata.namespace==${var.k10_operator["namespace"]}"
+  namespace   = "${var.k10_operator["namespace"]}"
 
+  # There's no wait condition...
   #wait {
   #  fields = {
   #    "status.phase" = "Complete"
@@ -138,28 +133,80 @@ data "kubernetes_resources" "k10_operator_installplan" {
   #}
 }
 
-# data "kubernetes_resource" "k10_operator_installplan" {
-#   depends_on = [kubernetes_manifest.k10_operator_subscription]
-# 
-#   api_version = "operators.coreos.com/v1alpha1"
-#   kind        = "InstallPlan"
+# The instance has to be installed in the same namespace as the operator
+# resource "kubernetes_namespace" "k10_instance" {
 #   metadata {
-#     name      = kubernetes_manifest.k10_operator_subscription.object.status.installplan.name
-#     namespace = var.k10_operator["namespace"]
+#     name = var.k10["namespace"]
+# 
+#     labels = {
+#       prodlevel = "backup"
+#     }
 #   }
 # 
-#   #wait {
-#   #  fields = {
-#   #    "status.phase" = "Complete"
-#   #  }
-#   #}
+#   lifecycle {
+#     ignore_changes = [
+#       metadata[0].annotations["openshift.io/sa.scc.mcs"],
+#       metadata[0].annotations["openshift.io/sa.scc.supplemental-groups"],
+#       metadata[0].annotations["openshift.io/sa.scc.uid-range"]
+#     ]
+#   }
 # }
 
+resource "kubernetes_manifest" "k10_instance" {
+  depends_on = [data.kubernetes_resources.k10_operator_installplan]
+
+  manifest = {
+    "apiVersion" = "apik10.kasten.io/v1alpha1"
+    "kind" = "K10"
+    "metadata" = {
+      "annotations" = {
+        "helm.sdk.operatorframework.io/rollback-force" = false
+      }
+      "name" = var.k10["name"]
+      "labels" = {
+        "prodlevel" = "backup"
+      }
+      "namespace" = var.k10["namespace"]
+    }
+    "spec" = {
+      "auth" = {
+        "basicAuth" = {
+          "enabled" = false
+          "htpasswd" = ""
+          "secretName" = ""
+        }
+        "tokenAuth" = {
+          "enabled" = true
+        }
+      }
+      "global" = {
+        "persistence" = {
+          "catalog" = {
+            "size" = "20Gi"
+          }
+          "storageClass" = ""
+        }
+      }
+      "metering" = {
+        "mode" = ""
+      }
+      "route" = {
+        "enabled" = true
+        "host" = ""
+        "tls" = {
+          "enabled" = false
+        }
+      }
+    }
+  }
+}
+
+# Helm alternative
 # resource "helm_release" "k10" {
 #   depends_on = [kubernetes_namespace.stock]
 # 
 #   name             = "k10"
-#   namespace        = var.k10_namespace
+#   namespace        = var.k10["namespace"]
 #   create_namespace = false
 # 
 #   repository = "kasten/k10"
@@ -177,16 +224,17 @@ data "kubernetes_resources" "k10_operator_installplan" {
 # 
 # }
 
-# resource "kubernetes_token_request_v1" "k10token" {
-#   depends_on = [data.kubernetes_resource.k10_operator_installplan]
-#   metadata {
-#     name      = "k10-k10"
-#     namespace = var.k10_namespace
-#   }
-#   spec {
-#     expiration_seconds = 36 * 3600
-#   }
-# }
+resource "kubernetes_token_request_v1" "k10token" {
+  depends_on = [kubernetes_manifest.k10_instance]
+
+  metadata {
+    name      = "k10-k10"
+    namespace = var.k10["namespace"]
+  }
+  spec {
+    expiration_seconds = 36 * 3600
+  }
+}
 
 # resource "kubernetes_manifest" "bppostgres" {
 #   depends_on = [helm_release.k10]
@@ -196,7 +244,7 @@ data "kubernetes_resources" "k10_operator_installplan" {
 # 
 #     metadata = {
 #       name = "postgresql-hooks"
-#       namespace = var.k10_namespace
+#       namespace = var.k10["namespace"]
 #     }
 # 
 #     actions = {
@@ -230,7 +278,7 @@ data "kubernetes_resources" "k10_operator_installplan" {
 # 
 #       metadata = {
 #         name = "stockupdate"
-#         namespace = var.k10_namespace
+#         namespace = var.k10["namespace"]
 #       }
 #       spec = {
 #         transforms = [
@@ -264,13 +312,13 @@ data "kubernetes_resources" "k10_operator_installplan" {
 # 
 #     metadata = {
 #       name = "postgres-blueprint-binding"
-#       namespace = var.k10_namespace
+#       namespace = var.k10["namespace"]
 #     }
 # 
 #     spec = {
 #         blueprintRef = {
 #             name = "postgresql-hooks"
-#             namespace = var.k10_namespace
+#             namespace = var.k10["namespace"]
 #         }
 #         resources = {
 #             matchAll = [
@@ -307,7 +355,7 @@ data "kubernetes_resources" "k10_operator_installplan" {
 resource "kubernetes_config_map_v1" "k10-eula-info" {
   metadata {
     name      = "k10-eula-info"
-    namespace = var.k10_namespace
+    namespace = var.k10["namespace"]
   }
 
   data = {

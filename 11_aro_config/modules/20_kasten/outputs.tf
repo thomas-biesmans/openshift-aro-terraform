@@ -18,3 +18,7 @@ output "storagecontainer" {
 output "k8object" {
     value = kubernetes_manifest.k10_operator_subscription.object
 }
+
+# output "k8object2" {
+#     value = data.kubernetes_resources.k10_operator_installplan
+# }

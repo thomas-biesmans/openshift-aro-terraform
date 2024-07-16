@@ -1,35 +1,48 @@
-variable "azurerm_resource_group" {
-  type = object({
-    name     = string
-    location = string
-    tags     = map(string)
-  })
-  description = "ARO resource group name"
+# Inherited variables
+
+variable "azlocation" {
+  description = "Location of the resource group."
 }
 
 variable "ownerref" {
-  description = "Azure owner reference"
+  type        = string
+  description = "Owner of the project short name for naming resources or login"
 }
+
 variable "owneremail" {
-  description = "Azure owner email"
+  type        = string
+  description = "Owner of the project email"
 }
-variable "aro_kubeconfig" {
-  description = "ARO Kubeconfig information"
+
+variable "project" {
+  type        = string
+  description = "project name"
+}
+
+variable "activity" {
+  type        = string
+  description = "activity"
 }
 
 locals {
-  aro_kubeconfig = yamldecode(var.aro_kubeconfig)
+  projectname = format("%s-%s", var.project, var.ownerref)
+  domain      = format("%s%s", var.project, var.ownerref)
+  tags = {
+    owner    = var.owneremail
+    activity = var.activity
+    project  = var.project
+  }
 }
+
 
 # Demo app variables
 
-variable "initinsert" {
+variable "postgresql_initinsert_psql" {
   type    = string
-  default = "../../input-files/PostgreSQL-DB-fill/initinsert.psql"
 }
 
 data "local_file" "initinsert" {
-  filename = "${path.module}/${var.initinsert}"
+  filename = "${path.module}/${var.postgresql_initinsert_psql}"
 }
 
 
@@ -37,29 +50,15 @@ data "local_file" "initinsert" {
 
 variable "azure_storage_account" {
   type = map(string)
-  default = {
-    tier             = "Standard"
-    replication_type = "LRS"
-  }
   description = "Account tier & replication type for the storage account used by Kasten, e.g. Standard & LRS"
 }
 
-variable "k10_namespace" {
-  type        = string
-  default     = "kasten-io"
-  description = "Namespace where Kasten K10 should be installed, e.g. kasten-io"
+variable "k10" {
+  type = map(string)
+  description = "Kasten K10 instance details"
 }
 
 variable "k10_operator" {
   type = map(string)
-  default = {
-    name                = "k10-kasten-operator-rhmp"
-    namespace           = "kasten-io-operator"
-    channel             = "stable"
-    installPlanApproval = "Automatic"
-    source              = "redhat-marketplace"
-    sourceNamespace     = "openshift-marketplace"
-    startingCSV         = "k10-kasten-operator-rhmp.v7.0.3"
-  }
-  description = "Namespace where Kasten K10's operator should be installed, e.g. kasten-io-operator"
+  description = "Operator details of Kasten K10's installation"
 }

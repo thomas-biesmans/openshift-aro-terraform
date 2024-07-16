@@ -1,0 +1,15 @@
+kasten:
+  azure_storage_account:
+    tier: Standard
+    replication_type: LRS
+  k10_operator:
+    name: k10-kasten-operator-rhmp
+    namespace: kasten-io                            # Same namespace as the instance
+    channel: stable
+    installPlanApproval: Automatic
+    source: redhat-marketplace
+    sourceNamespace: openshift-marketplace
+    startingCSV: k10-kasten-operator-rhmp.v7.0.4
+  k10:
+    name: k10
+    namespace: kasten-io                            # Same namespace as the operator
