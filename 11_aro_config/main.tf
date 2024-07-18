@@ -45,8 +45,18 @@ provider "helm" {
 
 # Deploying Kasten & a sample app to be backed up
 
+module "kasten_crds" {
+  source = "./modules/10_kasten_crds"
+
+  k10_operator               = local.k10_operator
+
+  kubeconfig_location_relative_to_cwd = local.kubeconfig_location_relative_to_cwd_insecure
+
+}
 module "kasten" {
   source = "./modules/20_kasten"
+
+  depends_on = [module.kasten_crds]
 
   azlocation = local.azlocation
   ownerref   = local.ownerref
@@ -56,7 +66,8 @@ module "kasten" {
 
   postgresql_initinsert_psql = var.postgresql_initinsert_psql
   azure_storage_account      = local.azure_storage_account
-  k10_operator               = local.k10_operator
   k10                        = local.k10
+
+  kubeconfig_location_relative_to_cwd = local.kubeconfig_location_relative_to_cwd_insecure
 
 }

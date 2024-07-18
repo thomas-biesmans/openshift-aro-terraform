@@ -32,129 +32,7 @@ resource "azurerm_storage_container" "sacontainer" {
 
 # OpenShift
 
-resource "kubernetes_namespace" "k10_operator" {
-  metadata {
-    name = var.k10_operator["namespace"]
-  }
-
-  lifecycle {
-    ignore_changes = [
-      metadata[0].annotations["openshift.io/sa.scc.mcs"],
-      metadata[0].annotations["openshift.io/sa.scc.supplemental-groups"],
-      metadata[0].annotations["openshift.io/sa.scc.uid-range"],
-      metadata[0].labels
-    ]
-  }
-}
-
-resource "kubernetes_manifest" "k10_operator_operatorgroup" {
-  manifest = {
-    "apiVersion" = "operators.coreos.com/v1"
-    "kind"       = "OperatorGroup"
-    "metadata" = {
-      "name"      = var.k10_operator["name"]
-      "namespace" = var.k10_operator["namespace"]
-    }
-    "spec" = {
-      "targetNamespaces" : [
-        var.k10_operator["namespace"]
-      ]
-      "upgradeStrategy" = "Default"
-    }
-  }
-}
-
-resource "kubernetes_manifest" "k10_operator_subscription" {
-  depends_on = [kubernetes_manifest.k10_operator_operatorgroup]
-  manifest = {
-    "apiVersion" = "operators.coreos.com/v1alpha1"
-    "kind"       = "Subscription"
-    "metadata" = {
-      "name"      = var.k10_operator["name"]
-      "namespace" = var.k10_operator["namespace"]
-    }
-    "spec" = {
-      "channel"             = var.k10_operator["channel"]
-      "installPlanApproval" = var.k10_operator["installPlanApproval"]
-      "name"                = var.k10_operator["name"]
-      "source"              = var.k10_operator["source"]
-      "sourceNamespace"     = var.k10_operator["sourceNamespace"]
-      "startingCSV"         = var.k10_operator["startingCSV"]
-    }
-  }
-
-  wait {
-    condition {
-      type   = "CatalogSourcesUnhealthy"
-      status = "False"
-    }
-  }
-  # wait {
-  #   fields = {
-  #     "status.installplan.name" = "^installplan-" # Status is not included...
-  #   }
-  # }
-}
-
-# data "kubernetes_manifest" "k10_operator_csv" {
-#   depends_on = [kubernetes_manifest.k10_operator_subscription]
-# 
-#   manifest = {
-#     "apiVersion" = "operators.coreos.com/v1alpha1"
-#     "kind"       = "ClusterServiceVersion"
-#     "metadata" = {
-#       "name"      = var.k10_operator["startingCSV"]
-#       "namespace" = var.k10_operator["namespace"]
-#     }
-#     "spec" = {
-#       "displayName" = 
-#     }
-#   }
-# 
-#   wait {
-#     fields = {
-#       "status.phase" = "Succeeded"
-#     }
-#   }
-# }
-
-data "kubernetes_resources" "k10_operator_installplan" {
-  depends_on = [kubernetes_manifest.k10_operator_subscription]
-
-  api_version = "operators.coreos.com/v1alpha1"
-  kind        = "InstallPlan"
-  namespace   = "${var.k10_operator["namespace"]}"
-
-  # There's no wait condition...
-  #wait {
-  #  fields = {
-  #    "status.phase" = "Complete"
-  #  }
-  #}
-}
-
-# The instance has to be installed in the same namespace as the operator
-# resource "kubernetes_namespace" "k10_instance" {
-#   metadata {
-#     name = var.k10["namespace"]
-# 
-#     labels = {
-#       prodlevel = "backup"
-#     }
-#   }
-# 
-#   lifecycle {
-#     ignore_changes = [
-#       metadata[0].annotations["openshift.io/sa.scc.mcs"],
-#       metadata[0].annotations["openshift.io/sa.scc.supplemental-groups"],
-#       metadata[0].annotations["openshift.io/sa.scc.uid-range"]
-#     ]
-#   }
-# }
-
 resource "kubernetes_manifest" "k10_instance" {
-  depends_on = [data.kubernetes_resources.k10_operator_installplan]
-
   manifest = {
     "apiVersion" = "apik10.kasten.io/v1alpha1"
     "kind" = "K10"
@@ -201,6 +79,34 @@ resource "kubernetes_manifest" "k10_instance" {
   }
 }
 
+resource "null_resource" "wait_for_route_to_become_available" {
+  depends_on = [kubernetes_manifest.k10_instance]
+
+  triggers = {
+    always_run = "${timestamp()}"
+  }
+
+  provisioner "local-exec" {
+    command = <<EOT
+      export KUBECONFIG=${var.kubeconfig_location_relative_to_cwd}
+      until oc get route k10-route -n ${var.k10["namespace"]} -o jsonpath='{.status.ingress[*].host}' | grep -qe '.*'; do
+        echo 'Waiting for route hostname to become available...'
+        sleep 2
+      done
+      echo 'Route hostname is available'
+    EOT
+  }
+}
+
+data "kubernetes_resources" "k10_route" {
+  depends_on = [null_resource.wait_for_route_to_become_available]
+
+  api_version = "route.openshift.io/v1"
+  kind        = "Route"
+  namespace   = var.k10["namespace"]
+
+}
+
 # Helm alternative
 # resource "helm_release" "k10" {
 #   depends_on = [kubernetes_namespace.stock]
@@ -224,8 +130,29 @@ resource "kubernetes_manifest" "k10_instance" {
 # 
 # }
 
-resource "kubernetes_token_request_v1" "k10token" {
+
+resource "null_resource" "wait_for_serviceaccount_to_become_available" {
   depends_on = [kubernetes_manifest.k10_instance]
+
+  triggers = {
+    always_run = "${timestamp()}"
+  }
+
+  provisioner "local-exec" {
+    command = <<EOT
+      export KUBECONFIG=${var.kubeconfig_location_relative_to_cwd}
+      until oc get serviceaccount k10-k10 -o json | jq -r ".metadata.name" | grep -qe ".*"; do
+        echo "Waiting for service account to become available..."
+        sleep 2
+      done
+      echo "Service account is available"
+    EOT
+  }
+}
+
+
+resource "kubernetes_token_request_v1" "k10token" {
+  depends_on = [null_resource.wait_for_serviceaccount_to_become_available]
 
   metadata {
     name      = "k10-k10"
@@ -236,121 +163,121 @@ resource "kubernetes_token_request_v1" "k10token" {
   }
 }
 
-# resource "kubernetes_manifest" "bppostgres" {
-#   depends_on = [helm_release.k10]
-#   manifest = {
-#     apiVersion = "cr.kanister.io/v1alpha1"
-#     kind       = "Blueprint"
-# 
-#     metadata = {
-#       name = "postgresql-hooks"
-#       namespace = var.k10["namespace"]
-#     }
-# 
-#     actions = {
-#        backupPrehook = {
-#             name = ""
-#             kind = ""
-#             phases = [
-#                 {
-#                     func = "KubeExec"
-#                     name = "makePGCheckPoint"
-#                     args = {
-#                         command = [
-#                             "bash","-o","errexit","-o","pipefail","-c","PGPASSWORD=$${POSTGRES_POSTGRES_PASSWORD} psql -d $${POSTGRES_DATABASE} -U postgres -c \"CHECKPOINT;\""
-#                         ]
-#                         container = "postgresql"
-#                         namespace = "{{ .StatefulSet.Namespace }}"
-#                         pod= "{{ index .StatefulSet.Pods 0 }}"
-#                     }
-#                 }
-#             ]
-#        } 
-#     }
-#   }
-# }
-# 
-# resource "kubernetes_manifest" "transformreplica" {
-#   depends_on = [helm_release.k10]
-#   manifest = {
-#       kind = "TransformSet"
-#       apiVersion = "config.kio.kasten.io/v1alpha1"
-# 
-#       metadata = {
-#         name = "stockupdate"
-#         namespace = var.k10["namespace"]
-#       }
-#       spec = {
-#         transforms = [
-#           {
-#            subject = {
-#             group= "apps"
-#             resource= "deployments"
-#            }
-#            name= "replicaupdate"
-#            json = [
-#             {
-#               op= "replace"
-#               path= "/spec/replicas"
-#               value= 0
-#             }
-#            ]
-#           },
-#         ]
-#       }
-#   }
-# }
-# 
-# resource "kubernetes_manifest" "bpbinding" {
-#   depends_on = [
-#     kubernetes_manifest.bppostgres
-#   ]
-# 
-#   manifest = {
-#     apiVersion = "config.kio.kasten.io/v1alpha1"
-#     kind       = "BlueprintBinding"
-# 
-#     metadata = {
-#       name = "postgres-blueprint-binding"
-#       namespace = var.k10["namespace"]
-#     }
-# 
-#     spec = {
-#         blueprintRef = {
-#             name = "postgresql-hooks"
-#             namespace = var.k10["namespace"]
-#         }
-#         resources = {
-#             matchAll = [
-#                 {
-#                     type = {
-#                         operator = "In"
-#                         values = [
-#                             {
-#                                 group = "apps"
-#                                 resource = "statefulsets"
-#                             }
-#                         ]
-#                     }
-#                 },
-#                 {
-#                     annotations = {
-#                         key = "kanister.kasten.io/blueprint"
-#                         operator = "DoesNotExist"
-#                     }
-#                 },
-#                 {
-#                     "labels"= {
-#                         key= "app.kubernetes.io/name"
-#                         operator= "In"
-#                         values= ["postgresql"]
-#                     }
-#                 }
-#             ]
-#         }
-#     }
-#   }
-# }
+resource "kubernetes_manifest" "bppostgres" {
+  depends_on = [kubernetes_manifest.k10_instance]
+
+  manifest = {
+    apiVersion = "cr.kanister.io/v1alpha1"
+    kind       = "Blueprint"
+
+    metadata = {
+      name = "postgresql-hooks"
+      namespace = var.k10["namespace"]
+    }
+
+    actions = {
+       backupPrehook = {
+            name = ""
+            kind = ""
+            phases = [
+                {
+                    func = "KubeExec"
+                    name = "makePGCheckPoint"
+                    args = {
+                        command = [
+                            "bash","-o","errexit","-o","pipefail","-c","PGPASSWORD=$${POSTGRES_POSTGRES_PASSWORD} psql -d $${POSTGRES_DATABASE} -U postgres -c \"CHECKPOINT;\""
+                        ]
+                        container = "postgresql"
+                        namespace = "{{ .StatefulSet.Namespace }}"
+                        pod= "{{ index .StatefulSet.Pods 0 }}"
+                    }
+                }
+            ]
+       } 
+    }
+  }
+}
+
+resource "kubernetes_manifest" "transformreplica" {
+  depends_on = [kubernetes_manifest.k10_instance]
+
+  manifest = {
+      kind = "TransformSet"
+      apiVersion = "config.kio.kasten.io/v1alpha1"
+
+      metadata = {
+        name = "stockupdate"
+        namespace = var.k10["namespace"]
+      }
+      spec = {
+        transforms = [
+          {
+           subject = {
+            group= "apps"
+            resource= "deployments"
+           }
+           name= "replicaupdate"
+           json = [
+            {
+              op= "replace"
+              path= "/spec/replicas"
+              value= 0
+            }
+           ]
+          },
+        ]
+      }
+  }
+}
+
+resource "kubernetes_manifest" "bpbinding" {
+  depends_on = [kubernetes_manifest.bppostgres]
+
+  manifest = {
+    apiVersion = "config.kio.kasten.io/v1alpha1"
+    kind       = "BlueprintBinding"
+
+    metadata = {
+      name = "postgres-blueprint-binding"
+      namespace = var.k10["namespace"]
+    }
+
+    spec = {
+        blueprintRef = {
+            name = "postgresql-hooks"
+            namespace = var.k10["namespace"]
+        }
+        resources = {
+            matchAll = [
+                {
+                    type = {
+                        operator = "In"
+                        values = [
+                            {
+                                group = "apps"
+                                resource = "statefulsets"
+                            }
+                        ]
+                    }
+                },
+                {
+                    annotations = {
+                        key = "kanister.kasten.io/blueprint"
+                        operator = "DoesNotExist"
+                    }
+                },
+                {
+                    "labels"= {
+                        key= "app.kubernetes.io/name"
+                        operator= "In"
+                        values= ["postgresql"]
+                    }
+                }
+            ]
+        }
+    }
+  }
+}
 
 resource "kubernetes_config_map_v1" "k10-eula-info" {
   metadata {

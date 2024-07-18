@@ -15,10 +15,10 @@ output "storagecontainer" {
 #  sensitive = true
 #}
 
-output "k8object" {
-    value = kubernetes_manifest.k10_operator_subscription.object
+output "k10_route_hostname" {
+    value = data.kubernetes_resources.k10_route.objects[*].status.ingress[0].host
 }
 
-# output "k8object2" {
-#     value = data.kubernetes_resources.k10_operator_installplan
-# }
+output "k8object" {
+    value = "biep" # data.kubernetes_resources.k10_route.objects[*].status.ingress[0].host
+}
