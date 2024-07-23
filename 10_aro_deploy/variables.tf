@@ -99,6 +99,7 @@ variable "azure_dns_zone" {
   default = {
     domain_name         = "<domain name>"         # Name of the DNS zone
     resource_group_name = "<resource group name>" # Resource Group name of the DNS zone
+    ttl                 = 300                     # TTL of the records, 300 by default
   }
 }
 

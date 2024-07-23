@@ -3,7 +3,7 @@ resource "azurerm_dns_a_record" "api_server" {
   name                = "api.${var.openshift["cluster_name"]}"
   zone_name           = var.azure_dns_zone["domain_name"]
   resource_group_name = var.azure_dns_zone["resource_group_name"]
-  ttl                 = 300
+  ttl                 = var.azure_dns_zone["ttl"]
   records             = [jsondecode(data.azapi_resource.aro_details.output).properties.apiserverProfile.ip]
 
   provider = azurerm.secondary
@@ -13,7 +13,7 @@ resource "azurerm_dns_a_record" "apps_wildcard" {
   name                = "*.apps.${var.openshift["cluster_name"]}"
   zone_name           = var.azure_dns_zone["domain_name"]
   resource_group_name = var.azure_dns_zone["resource_group_name"]
-  ttl                 = 300
+  ttl                 = var.azure_dns_zone["ttl"]
   records             = [jsondecode(data.azapi_resource.aro_details.output).properties.ingressProfiles[0].ip]
 
   provider = azurerm.secondary
