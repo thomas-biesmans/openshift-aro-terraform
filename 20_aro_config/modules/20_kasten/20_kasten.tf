@@ -15,7 +15,7 @@ data "azurerm_resource_group" "aro_rg" {
 resource "azurerm_storage_account" "sa" {
   name                            = format("%s%s", var.ownerref, random_string.randomsa.result)
   resource_group_name             = data.azurerm_resource_group.aro_rg.name
-  location                        = data.azurerm_resource_group.aro_rg.location
+  location                        = var.azlocation
   account_tier                    = var.azure_storage_account["tier"]
   account_replication_type        = var.azure_storage_account["replication_type"]
   shared_access_key_enabled       = true

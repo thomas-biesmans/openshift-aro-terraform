@@ -2,6 +2,7 @@ kasten:
   azure_storage_account:
     tier: Standard
     replication_type: LRS
+    azlocation: francecentral
   k10_operator:
     name: k10-kasten-operator-rhmp
     namespace: kasten-io                            # Same namespace as the instance

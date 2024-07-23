@@ -50,7 +50,7 @@ data "local_file" "initinsert" {
 
 variable "azure_storage_account" {
   type        = map(string)
-  description = "Account tier & replication type for the storage account used by Kasten, e.g. Standard & LRS"
+  description = "Account tier, replication type & azlocation for the storage account used by Kasten, e.g. Standard & LRS"
 }
 
 variable "k10" {

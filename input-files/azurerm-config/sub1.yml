@@ -1,5 +1,5 @@
 azure:
-  azlocation: FranceCentral       # No zone capacity in westeurope, per "az vm list-skus --size Standard_D8s_v3 --output table"
+  azlocation: francecentral       # Use lowercase. No zone capacity in westeurope, per "az vm list-skus --size Standard_D8s_v3 --output table"
   ownerref: thbie
   owneremail: thomas.biesmans@inetum-realdolmen.world
   project: az-we-lab-aro-kasten

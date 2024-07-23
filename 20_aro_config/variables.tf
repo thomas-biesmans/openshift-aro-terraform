@@ -80,9 +80,11 @@ locals {
   azure_storage_account = local.yaml_config_kasten.kasten.azure_storage_account != null ? {
     tier             = lookup(local.yaml_config_kasten.kasten.azure_storage_account, "tier", "")
     replication_type = lookup(local.yaml_config_kasten.kasten.azure_storage_account, "replication_type", "")
+    azlocation       = lookup(local.yaml_config_kasten.kasten.azure_storage_account, "azlocation", "")
     } : {
     tier             = var.azure_storage_account["tier"]
     replication_type = var.azure_storage_account["replication_type"]
+    azlocation       = var.azure_storage_account["azlocation"]
   }
 
   k10_operator = local.yaml_config_kasten.kasten.k10_operator != null ? {
@@ -190,8 +192,9 @@ variable "azure_storage_account" {
   default = {
     tier             = "Standard"
     replication_type = "LRS"
+    azlocation       = "francecentral"
   }
-  description = "Account tier & replication type for the storage account used by Kasten, e.g. Standard & LRS"
+  description = "Account tier, replication type & azlocation for the storage account used by Kasten, e.g. Standard & LRS"
 }
 
 variable "k10" {
