@@ -123,5 +123,5 @@ data "kubernetes_resources" "kasten_operator_completed_installplan" {
 
   api_version = "operators.coreos.com/v1alpha1"
   kind        = "InstallPlan"
-  namespace   = "${var.k10_operator["namespace"]}"
+  namespace   = var.k10_operator["namespace"]
 }

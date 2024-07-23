@@ -35,7 +35,7 @@ resource "azurerm_storage_container" "sacontainer" {
 resource "kubernetes_manifest" "k10_instance" {
   manifest = {
     "apiVersion" = "apik10.kasten.io/v1alpha1"
-    "kind" = "K10"
+    "kind"       = "K10"
     "metadata" = {
       "annotations" = {
         "helm.sdk.operatorframework.io/rollback-force" = false
@@ -49,8 +49,8 @@ resource "kubernetes_manifest" "k10_instance" {
     "spec" = {
       "auth" = {
         "basicAuth" = {
-          "enabled" = false
-          "htpasswd" = ""
+          "enabled"    = false
+          "htpasswd"   = ""
           "secretName" = ""
         }
         "tokenAuth" = {
@@ -70,7 +70,7 @@ resource "kubernetes_manifest" "k10_instance" {
       }
       "route" = {
         "enabled" = true
-        "host" = ""
+        "host"    = ""
         "tls" = {
           "enabled" = false
         }
@@ -171,29 +171,29 @@ resource "kubernetes_manifest" "bppostgres" {
     kind       = "Blueprint"
 
     metadata = {
-      name = "postgresql-hooks"
+      name      = "postgresql-hooks"
       namespace = var.k10["namespace"]
     }
 
     actions = {
-       backupPrehook = {
-            name = ""
-            kind = ""
-            phases = [
-                {
-                    func = "KubeExec"
-                    name = "makePGCheckPoint"
-                    args = {
-                        command = [
-                            "bash","-o","errexit","-o","pipefail","-c","PGPASSWORD=$${POSTGRES_POSTGRES_PASSWORD} psql -d $${POSTGRES_DATABASE} -U postgres -c \"CHECKPOINT;\""
-                        ]
-                        container = "postgresql"
-                        namespace = "{{ .StatefulSet.Namespace }}"
-                        pod= "{{ index .StatefulSet.Pods 0 }}"
-                    }
-                }
-            ]
-       } 
+      backupPrehook = {
+        name = ""
+        kind = ""
+        phases = [
+          {
+            func = "KubeExec"
+            name = "makePGCheckPoint"
+            args = {
+              command = [
+                "bash", "-o", "errexit", "-o", "pipefail", "-c", "PGPASSWORD=$${POSTGRES_POSTGRES_PASSWORD} psql -d $${POSTGRES_DATABASE} -U postgres -c \"CHECKPOINT;\""
+              ]
+              container = "postgresql"
+              namespace = "{{ .StatefulSet.Namespace }}"
+              pod       = "{{ index .StatefulSet.Pods 0 }}"
+            }
+          }
+        ]
+      }
     }
   }
 }
@@ -202,31 +202,31 @@ resource "kubernetes_manifest" "transformreplica" {
   depends_on = [kubernetes_manifest.k10_instance]
 
   manifest = {
-      kind = "TransformSet"
-      apiVersion = "config.kio.kasten.io/v1alpha1"
+    kind       = "TransformSet"
+    apiVersion = "config.kio.kasten.io/v1alpha1"
 
-      metadata = {
-        name = "stockupdate"
-        namespace = var.k10["namespace"]
-      }
-      spec = {
-        transforms = [
-          {
-           subject = {
-            group= "apps"
-            resource= "deployments"
-           }
-           name= "replicaupdate"
-           json = [
+    metadata = {
+      name      = "stockupdate"
+      namespace = var.k10["namespace"]
+    }
+    spec = {
+      transforms = [
+        {
+          subject = {
+            group    = "apps"
+            resource = "deployments"
+          }
+          name = "replicaupdate"
+          json = [
             {
-              op= "replace"
-              path= "/spec/replicas"
-              value= 0
+              op    = "replace"
+              path  = "/spec/replicas"
+              value = 0
             }
-           ]
-          },
-        ]
-      }
+          ]
+        },
+      ]
+    }
   }
 }
 
@@ -238,43 +238,43 @@ resource "kubernetes_manifest" "bpbinding" {
     kind       = "BlueprintBinding"
 
     metadata = {
-      name = "postgres-blueprint-binding"
+      name      = "postgres-blueprint-binding"
       namespace = var.k10["namespace"]
     }
 
     spec = {
-        blueprintRef = {
-            name = "postgresql-hooks"
-            namespace = var.k10["namespace"]
-        }
-        resources = {
-            matchAll = [
+      blueprintRef = {
+        name      = "postgresql-hooks"
+        namespace = var.k10["namespace"]
+      }
+      resources = {
+        matchAll = [
+          {
+            type = {
+              operator = "In"
+              values = [
                 {
-                    type = {
-                        operator = "In"
-                        values = [
-                            {
-                                group = "apps"
-                                resource = "statefulsets"
-                            }
-                        ]
-                    }
-                },
-                {
-                    annotations = {
-                        key = "kanister.kasten.io/blueprint"
-                        operator = "DoesNotExist"
-                    }
-                },
-                {
-                    "labels"= {
-                        key= "app.kubernetes.io/name"
-                        operator= "In"
-                        values= ["postgresql"]
-                    }
+                  group    = "apps"
+                  resource = "statefulsets"
                 }
-            ]
-        }
+              ]
+            }
+          },
+          {
+            annotations = {
+              key      = "kanister.kasten.io/blueprint"
+              operator = "DoesNotExist"
+            }
+          },
+          {
+            "labels" = {
+              key      = "app.kubernetes.io/name"
+              operator = "In"
+              values   = ["postgresql"]
+            }
+          }
+        ]
+      }
     }
   }
 }

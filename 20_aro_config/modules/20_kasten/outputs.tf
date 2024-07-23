@@ -16,9 +16,9 @@ output "storagecontainer" {
 #}
 
 output "k10_route_hostname" {
-    value = data.kubernetes_resources.k10_route.objects[*].status.ingress[0].host
+  value = data.kubernetes_resources.k10_route.objects[*].status.ingress[0].host
 }
 
 output "k8object" {
-    value = "biep" # data.kubernetes_resources.k10_route.objects[*].status.ingress[0].host
+  value = "biep" # data.kubernetes_resources.k10_route.objects[*].status.ingress[0].host
 }

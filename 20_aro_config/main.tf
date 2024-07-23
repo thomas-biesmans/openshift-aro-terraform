@@ -48,7 +48,7 @@ provider "helm" {
 module "kasten_crds" {
   source = "./modules/10_kasten_crds"
 
-  k10_operator               = local.k10_operator
+  k10_operator = local.k10_operator
 
   kubeconfig_location_relative_to_cwd = local.kubeconfig_location_relative_to_cwd_insecure
 
