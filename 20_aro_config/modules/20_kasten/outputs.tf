@@ -15,10 +15,10 @@ output "storagecontainer" {
 #  sensitive = true
 #}
 
-output "k10_route_hostname" {
-  value = data.kubernetes_resources.k10_route.objects[*].status.ingress[0].host
-}
+# output "k10_route_hostname" {
+#   value = "${data.kubernetes_resources.k10_route.objects[*].status.ingress[0].host}${data.kubernetes_resources.k10_route.objects[*].status.ingress[0].path}"
+# }
 
-output "k8object" {
-  value = "biep" # data.kubernetes_resources.k10_route.objects[*].status.ingress[0].host
-}
+# output "k8object" {
+#   value = "biep" # data.kubernetes_resources.k10_route.objects[*].status.ingress[0].host
+# }

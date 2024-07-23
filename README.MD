@@ -8,11 +8,18 @@ Use : ```--use-device-code ``` if you're using a remote session.
 
 Select the subscription you want to deploy in.
 
-### Figure out support locations
+### Figure out supported locations
+The following commands will check:
+- The locations your subscription has access to.
+- The VM SKUs in western Europe.
+- The standard Standard_D8s_v3 SKUs accross all locations in case there are zone limitations (all three zones are needed).
+- ARO support in a location.
+
 ```
 az account list-locations | jq '.[] | .name,.displayName'
-az aro get-versions --location "eastus"
-az vm list-skus --location westeurope  --size Standard_D --all --output table
+az vm list-skus --location westeurope --size Standard_D --all --output table
+az vm list-skus --size Standard_D8s_v3 --output table 
+az aro get-versions --location westeurope
 ```
 
 ## OpenShift pull secret
@@ -90,17 +97,19 @@ terraform output -raw aro_admin_pass | pbcopy
 This includes:
 - Kasten deployment
 
-Because Terraform needs a CRD to install a CR, we first have to apply the CRDs / operators using '-target'
+Because Terraform needs a CRD (Custom Resource Definition) to install a CR (Custom Resource), we first have to apply the CRDs / operators using '-target'
 Init & apply:
 ```bash
-terraform -chdir=11_aro_config init
-terraform -chdir=11_aro_config apply -target=module.kasten_crds.data.kubernetes_resources.wait_for_operators_installplans_to_become_complete
-terraform -chdir=11_aro_config apply
+terraform -chdir=20_aro_config init
+# Operator & Kanister first
+terraform -chdir=20_aro_config apply -target=module.kasten_crds.data.kubernetes_resources.kasten_operator_completed_installplan
+# K10 instance deployment second for remaining CRDs
+terraform -chdir=20_aro_config apply -target=module.kasten_instance.kubernetes_manifest.k10_instance
+# Full deployment third
+terraform -chdir=20_aro_config apply
 ```
 
-
-
-
+# WIP
 
 Get Storage Account
 ```bash

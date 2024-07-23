@@ -53,10 +53,22 @@ module "kasten_crds" {
   kubeconfig_location_relative_to_cwd = local.kubeconfig_location_relative_to_cwd_insecure
 
 }
+module "kasten_instance" {
+  source = "./modules/11_kasten_instance"
+
+  depends_on = [module.kasten_crds]
+
+  owneremail = local.owneremail
+  
+  k10 = local.k10
+
+  kubeconfig_location_relative_to_cwd = local.kubeconfig_location_relative_to_cwd_insecure
+
+}
 module "kasten" {
   source = "./modules/20_kasten"
 
-  depends_on = [module.kasten_crds]
+  depends_on = [module.kasten_instance]
 
   azlocation = local.azlocation
   ownerref   = local.ownerref

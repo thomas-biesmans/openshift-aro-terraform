@@ -1,5 +1,5 @@
 
-# OpenShift
+# OpenShift Operator installation
 
 resource "kubernetes_namespace" "k10_operator" {
   metadata {
@@ -61,34 +61,7 @@ resource "kubernetes_manifest" "k10_operator_subscription" {
       status = "False"
     }
   }
-  # wait {
-  #   fields = {
-  #     "status.installplan.name" = "^installplan-" # Status is not included...
-  #   }
-  # }
 }
-
-# data "kubernetes_manifest" "k10_operator_csv" {
-#   depends_on = [kubernetes_manifest.k10_operator_subscription]
-# 
-#   manifest = {
-#     "apiVersion" = "operators.coreos.com/v1alpha1"
-#     "kind"       = "ClusterServiceVersion"
-#     "metadata" = {
-#       "name"      = var.k10_operator["startingCSV"]
-#       "namespace" = var.k10_operator["namespace"]
-#     }
-#     "spec" = {
-#       "displayName" = 
-#     }
-#   }
-# 
-#   wait {
-#     fields = {
-#       "status.phase" = "Succeeded"
-#     }
-#   }
-# }
 
 resource "null_resource" "wait_for_kasten_installplans_to_become_available" {
   depends_on = [kubernetes_manifest.k10_operator_subscription]
@@ -118,8 +91,44 @@ resource "null_resource" "wait_for_kasten_installplans_to_become_available" {
   }
 }
 
+# Kanister Helm installation for Blueprints
+
+resource "kubernetes_namespace" "kasten_io_kanister" {
+  metadata {
+    name = "${var.k10_operator["namespace"]}-kanister"
+  }
+
+  lifecycle {
+    ignore_changes = [
+      metadata[0].annotations["openshift.io/sa.scc.mcs"],
+      metadata[0].annotations["openshift.io/sa.scc.supplemental-groups"],
+      metadata[0].annotations["openshift.io/sa.scc.uid-range"]
+    ]
+  }
+}
+
+resource "helm_release" "kanister_operator" {
+  name       = "kanister"
+  namespace  = kubernetes_namespace.kasten_io_kanister.metadata[0].name
+  create_namespace = false
+
+  repository = "https://charts.kanister.io/"
+  chart      = "kanister-operator"
+
+  # Conditionally set the version to avoid unnecessary upgrades
+  # version = var.kanister_operator_version
+
+  # set {
+  #   name  = "operator.image.tag"
+  #   value = var.kanister_operator_image_tag
+  # }
+}
+
 data "kubernetes_resources" "kasten_operator_completed_installplan" {
-  depends_on = [null_resource.wait_for_kasten_installplans_to_become_available]
+  depends_on = [
+    null_resource.wait_for_kasten_installplans_to_become_available,
+    helm_release.kanister_operator
+  ]
 
   api_version = "operators.coreos.com/v1alpha1"
   kind        = "InstallPlan"
