@@ -90,7 +90,7 @@ resource "kubernetes_manifest" "k10_operator_subscription" {
 #   }
 # }
 
-resource "null_resource" "wait_for_installplans_to_become_available" {
+resource "null_resource" "wait_for_kasten_installplans_to_become_available" {
   depends_on = [kubernetes_manifest.k10_operator_subscription]
 
   triggers = {
@@ -118,8 +118,8 @@ resource "null_resource" "wait_for_installplans_to_become_available" {
   }
 }
 
-data "kubernetes_resources" "wait_for_operators_installplans_to_become_complete" {
-  depends_on = [null_resource.wait_for_installplans_to_become_available]
+data "kubernetes_resources" "kasten_operator_completed_installplan" {
+  depends_on = [null_resource.wait_for_kasten_installplans_to_become_available]
 
   api_version = "operators.coreos.com/v1alpha1"
   kind        = "InstallPlan"
