@@ -58,9 +58,11 @@ locals {
   azure_dns_zone = local.yaml_config_sub2.azure_dns != null ? {
     domain_name         = lookup(local.yaml_config_sub2.azure_dns, "domain_name", "")
     resource_group_name = lookup(local.yaml_config_sub2.azure_dns, "resource_group_name", "")
+    ttl                 = lookup(local.yaml_config_sub2.azure_dns, "ttl", "")
     } : {
     domain_name         = var.azure_dns_zone["domain_name"]
     resource_group_name = var.azure_dns_zone["resource_group_name"]
+    ttl                 = var.azure_dns_zone["ttl"]
   }
 
 }
