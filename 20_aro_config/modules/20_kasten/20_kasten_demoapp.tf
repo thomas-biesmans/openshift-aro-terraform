@@ -59,23 +59,29 @@ resource "helm_release" "stockgres" {
     name  = "global.postgresql.auth.database"
     value = "stock"
   }
+
+  # Initializing a new instance through .sql, .sh, or .sql.gz files, per https://github.com/bitnami/charts/blob/main/bitnami/postgresql/README.md#initialize-a-fresh-instance
+  set {
+    name  = "primary.initdb.scriptsConfigMap"
+    value = kubernetes_config_map.sql_init_insert.metadata[0].name
+  }
 }
 
-resource "kubernetes_config_map" "stockcm" {
+resource "kubernetes_config_map" "sql_init_insert" {
   depends_on = [kubernetes_namespace.stock]
 
   metadata {
-    name      = "stock-demo-configmap"
+    name      = "stock-demo-initinsert"
     namespace = kubernetes_namespace.stock.metadata[0].name
   }
 
   data = {
-    "initinsert.psql" = data.local_file.initinsert.content
+    "initinsert.sql" = data.local_file.initinsert.content
   }
 }
 
 resource "kubernetes_deployment" "stock-deploy" {
-  depends_on = [kubernetes_namespace.stock]
+  depends_on = [helm_release.stockgres]
 
   metadata {
     name      = "stock-demo-deploy"
@@ -105,9 +111,10 @@ resource "kubernetes_deployment" "stock-deploy" {
         volume {
           name = "config"
           config_map {
-            name = "stock-demo-configmap"
+            name = "stock-demo-initinsert"
           }
         }
+
         container {
           image = "tdewin/stock-demo"
           name  = "stock-demo"
@@ -216,28 +223,3 @@ resource "kubernetes_manifest" "stockroute" {
     }
   }
 }
-
-# Can't use kubernetes_manifest, because it queries the cluster for the type, so YAML-based kubectl_manifest instead
-# resource "kubectl_manifest" "stockroute" {
-#   depends_on = [kubernetes_namespace.stock]
-#   yaml_body = <<YAML
-# apiVersion: route.openshift.io/v1
-# kind: Route
-# metadata:
-#   labels:
-#     app: "stock-demo"
-#   name: "stock-route"
-#   namespace: kubernetes_namespace.stock.metadata[0].name
-# spec:
-#   path: /
-#   to:
-#     kind: Service
-#     name: stock-demo-svc
-#     weight: 100
-#   port:
-#     targetPort: http
-#   tls:
-#     termination: edge
-#   wildcardPolicy: None
-# YAML
-# }

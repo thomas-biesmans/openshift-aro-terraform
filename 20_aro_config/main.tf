@@ -76,7 +76,6 @@ module "kasten" {
   project    = local.project
   activity   = local.activity
 
-  postgresql_initinsert_psql = var.postgresql_initinsert_psql
   azure_storage_account      = local.azure_storage_account
   k10                        = local.k10
 

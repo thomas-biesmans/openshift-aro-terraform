@@ -37,12 +37,8 @@ locals {
 
 # Demo app variables
 
-variable "postgresql_initinsert_psql" {
-  type = string
-}
-
 data "local_file" "initinsert" {
-  filename = "${path.module}/${var.postgresql_initinsert_psql}"
+  filename = "${path.module}/initinsert.sql"
 }
 
 

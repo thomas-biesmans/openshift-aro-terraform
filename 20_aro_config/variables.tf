@@ -176,15 +176,6 @@ variable "kubeconfig_location_relative_to_cwd" {
 }
 
 
-
-# Demo app variables
-
-variable "postgresql_initinsert_psql" {
-  type    = string
-  default = "./../../../input-files/PostgreSQL-DB-fill/initinsert.psql"
-}
-
-
 # Kasten variables
 
 variable "azure_storage_account" {
