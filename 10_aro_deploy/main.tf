@@ -39,7 +39,11 @@ provider "azurerm" {
 
 # First subscription that hosts ARO
 provider "azurerm" {
-  features {}
+  features {
+    resource_group {
+      prevent_deletion_if_contains_resources = false
+    }
+  }
   alias           = "primary"
   client_id       = local.credentials_svp_sub1.client_id
   client_secret   = local.credentials_svp_sub1.client_secret
