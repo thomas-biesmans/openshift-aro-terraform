@@ -114,7 +114,7 @@ resource "null_resource" "wait_for_serviceaccount_to_become_available" {
   provisioner "local-exec" {
     command = <<EOT
       export KUBECONFIG=${var.kubeconfig_location_relative_to_cwd}
-      until oc get serviceaccount k10-k10 -o json | jq -r ".metadata.name" | grep -qe ".*"; do
+      until oc get serviceaccount k10-k10 -n ${var.k10["namespace"]} -o json | jq -r ".metadata.name" | grep -qe ".*"; do
         echo "Waiting for service account to become available..."
         sleep 2
       done
