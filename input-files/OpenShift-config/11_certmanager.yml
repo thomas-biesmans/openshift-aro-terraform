@@ -1,0 +1,15 @@
+certmanager:
+  certmanager_operator:
+    name: openshift-cert-manager-operator
+    namespace: openshift-cert-manager-operator
+    channel: stable-v1
+    installPlanApproval: Automatic
+    source: redhat-operators
+    sourceNamespace: openshift-marketplace
+    # startingCSV: cert-manager-operator.v1.14.0
+  certmanager:
+    name: certmanager
+    namespace: openshift-cert-manager
+    letsencryptemail: thomas.biesmans@inetum-realdolmen.world
+    manual_refresh_api_certificate_trigger_timestamp: "2024-07-24_18-15"      # Alpha numeric, '-', '_' or '.'
+    manual_refresh_wildcard_certificate_trigger_timestamp: "2024-07-24_16-55" # Alpha numeric, '-', '_' or '.'

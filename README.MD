@@ -92,6 +92,20 @@ open $(terraform output -raw console_url)
 terraform output -raw aro_admin_pass | pbcopy
 ```
 
+## Azure Red Hat OpenShift - ARO - Lets Encrypt
+
+Lets Encrypt can be used to deploy certificates through the OpenShift 'openshift-cert-manager-operator' operator.
+
+Because Terraform needs a CRD (Custom Resource Definition) to install a CR (Custom Resource), we first have to apply the CRDs / operators using '-target'
+Init & apply:
+```bash
+terraform -chdir=11_aro_letsencrypt init
+# Operator & Kanister first
+terraform -chdir=11_aro_letsencrypt apply -target=module.letsencrypt_crds.data.kubernetes_resources.certmanager_operator_completed_installplan
+# Full deployment second
+terraform -chdir=11_aro_letsencrypt apply
+```
+
 ## Azure Red Hat OpenShift - ARO - configuration
 
 This includes:
