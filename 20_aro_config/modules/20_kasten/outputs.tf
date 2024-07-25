@@ -1,23 +1,16 @@
 output "storageaccount" {
-  value = azurerm_storage_account.sa.name
+  value = azurerm_storage_account.kasten_sa.name
 
 }
+
 output "storageaccount_ak" {
-  value     = azurerm_storage_account.sa.secondary_access_key
+  value     = azurerm_storage_account.kasten_sa.secondary_access_key
   sensitive = true
 }
+
 output "storagecontainer" {
-  value = azurerm_storage_container.sacontainer.name
+  value = azurerm_storage_container.kasten_sa_container.name
 }
-
-#output "k10token" {
-#  value     = kubernetes_token_request_v1.k10token.token
-#  sensitive = true
-#}
-
-# output "k10_route_hostname" {
-#   value = "${data.kubernetes_resources.k10_route.objects[*].status.ingress[0].host}${data.kubernetes_resources.k10_route.objects[*].status.ingress[0].path}"
-# }
 
 # output "k8object" {
 #   value = "biep" # data.kubernetes_resources.k10_route.objects[*].status.ingress[0].host

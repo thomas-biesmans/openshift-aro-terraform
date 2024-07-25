@@ -12,7 +12,7 @@ data "azurerm_resource_group" "aro_rg" {
   name = "${local.projectname}-aro-rg"
 }
 
-resource "azurerm_storage_account" "sa" {
+resource "azurerm_storage_account" "kasten_sa" {
   name                            = format("%s%s", var.ownerref, random_string.randomsa.result)
   resource_group_name             = data.azurerm_resource_group.aro_rg.name
   location                        = var.azlocation
@@ -23,18 +23,49 @@ resource "azurerm_storage_account" "sa" {
   tags                            = data.azurerm_resource_group.aro_rg.tags
 }
 
-resource "azurerm_storage_container" "sacontainer" {
-  name                  = "k10"
-  storage_account_name  = azurerm_storage_account.sa.name
+resource "azurerm_storage_container" "kasten_sa_container" {
+  name                  = "k10-demoapp"
+  storage_account_name  = azurerm_storage_account.kasten_sa.name
   container_access_type = "private"
 }
 
+# data "azurerm_storage_account_sas" "kasten_sa_container" {
+#   connection_string = azurerm_storage_account.kasten_sa.primary_connection_string
+#   https_only        = true
+# 
+#   resource_types {
+#     service   = true
+#     container = false
+#     object    = false
+#   }
+# 
+#   services {
+#     blob  = true
+#     queue = false
+#     table = false
+#     file  = false
+#   }
+# 
+#   start  = "2024-01-01"
+#   expiry = "2025-12-31"
+# 
+#   permissions {
+#     read    = true
+#     write   = true
+#     delete  = true
+#     list    = true
+#     add     = true
+#     create  = true
+#     update  = true
+#     process = true
+#     tag     = false
+#     filter  = false
+#   }
+# }
 
 # OpenShift
 
 resource "kubernetes_manifest" "bppostgres" {
-  # depends_on = [kubernetes_manifest.k10_instance]
-
   manifest = {
     apiVersion = "cr.kanister.io/v1alpha1"
     kind       = "Blueprint"
@@ -68,8 +99,6 @@ resource "kubernetes_manifest" "bppostgres" {
 }
 
 resource "kubernetes_manifest" "transformreplica" {
-  # depends_on = [kubernetes_manifest.k10_instance]
-
   manifest = {
     kind       = "TransformSet"
     apiVersion = "config.kio.kasten.io/v1alpha1"
@@ -100,8 +129,6 @@ resource "kubernetes_manifest" "transformreplica" {
 }
 
 resource "kubernetes_manifest" "bpbinding" {
-  # depends_on = [kubernetes_manifest.bppostgres]
-
   manifest = {
     apiVersion = "config.kio.kasten.io/v1alpha1"
     kind       = "BlueprintBinding"
@@ -148,3 +175,85 @@ resource "kubernetes_manifest" "bpbinding" {
   }
 }
 
+resource "kubernetes_manifest" "backup_policy" {
+  manifest = {
+    apiVersion = "config.kio.kasten.io/v1alpha1"
+    kind       = "Policy"
+
+    metadata = {
+      name      = "demoapp-backup-policy"
+      namespace = var.k10["namespace"]
+    }
+
+    spec = {
+      comment = "Backup policy for the demoapp"
+      frequency = "@hourly"
+      retention = {
+        hourly = 24
+        daily = 7
+      }
+      actions = [
+        {action = "backup"}
+      ]
+      selector = {
+        matchLabels = {
+          "k10.kasten.io/appNamespace" = kubernetes_namespace.stock.metadata[0].name
+        }
+      }
+    }
+  }
+}
+
+
+resource "kubernetes_secret" "azure_storageaccount" {
+  metadata {
+    name      = "kasten-sas-token-secret"
+    namespace = var.k10["namespace"]
+  }
+
+  data = {
+    azure_storage_account_id  = azurerm_storage_account.kasten_sa.name
+    azure_storage_environment = "AzurePublicCloud"
+    azure_storage_key         = azurerm_storage_account.kasten_sa.primary_access_key 
+    # data.azurerm_storage_account_sas.kasten_sa_container.sas
+  }
+
+  type = "Opaque"
+}
+
+resource "kubernetes_manifest" "kasten_location" {
+  # Per: https://docs.kasten.io/latest/api/profiles.html#create-an-object-store-location-profile, which doesn't seem to match properly with 7.0.4
+
+  manifest = {
+    apiVersion = "config.kio.kasten.io/v1alpha1"
+    kind       = "Profile"
+    metadata = {
+      name      = "azure-blob-storage-profile"
+      namespace = var.k10["namespace"]
+    }
+    spec = {
+      type         = "Location"
+      locationSpec = {
+        credential = {
+          secretType     = "AzStorageAccount"
+          secret = {
+            apiVersion = "v1"
+            kind = "secret"
+            name = kubernetes_secret.azure_storageaccount.metadata[0].name
+            namespace = var.k10["namespace"]
+          }
+        }
+        type = "ObjectStore"
+        objectStore = {
+          objectStoreType = "AZ" # Not Azure
+          name = azurerm_storage_container.kasten_sa_container.name
+          # endpoint   = azurerm_storage_account.kasten_sa.primary_blob_endpoint 
+          # skipSSLVerify = "False"
+          # region     = var.azlocation
+          # protectionPeriod = "240h"
+        }
+        infraPortable = "False"
+      }
+    }
+  }
+}
