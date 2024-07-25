@@ -59,7 +59,7 @@ module "kasten_instance" {
   depends_on = [module.kasten_crds]
 
   owneremail = local.owneremail
-  
+
   k10 = local.k10
 
   kubeconfig_location_relative_to_cwd = local.kubeconfig_location_relative_to_cwd_insecure
@@ -76,8 +76,8 @@ module "kasten" {
   project    = local.project
   activity   = local.activity
 
-  azure_storage_account      = local.azure_storage_account
-  k10                        = local.k10
+  azure_storage_account = local.azure_storage_account
+  k10                   = local.k10
 
   kubeconfig_location_relative_to_cwd = local.kubeconfig_location_relative_to_cwd_insecure
 

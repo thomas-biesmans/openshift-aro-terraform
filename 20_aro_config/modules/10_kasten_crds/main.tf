@@ -69,7 +69,7 @@ resource "null_resource" "wait_for_kasten_installplans_to_become_available" {
   lifecycle {
     replace_triggered_by = [kubernetes_manifest.k10_operator_subscription]
   }
-  
+
   provisioner "local-exec" {
     command = <<EOT
       export KUBECONFIG=${var.kubeconfig_location_relative_to_cwd}
@@ -108,8 +108,8 @@ resource "kubernetes_namespace" "kasten_io_kanister" {
 }
 
 resource "helm_release" "kanister_operator" {
-  name       = "kanister"
-  namespace  = kubernetes_namespace.kasten_io_kanister.metadata[0].name
+  name             = "kanister"
+  namespace        = kubernetes_namespace.kasten_io_kanister.metadata[0].name
   create_namespace = false
 
   repository = "https://charts.kanister.io/"

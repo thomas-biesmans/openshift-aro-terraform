@@ -175,36 +175,6 @@ resource "kubernetes_manifest" "bpbinding" {
   }
 }
 
-resource "kubernetes_manifest" "backup_policy" {
-  manifest = {
-    apiVersion = "config.kio.kasten.io/v1alpha1"
-    kind       = "Policy"
-
-    metadata = {
-      name      = "demoapp-backup-policy"
-      namespace = var.k10["namespace"]
-    }
-
-    spec = {
-      comment = "Backup policy for the demoapp"
-      frequency = "@hourly"
-      retention = {
-        hourly = 24
-        daily = 7
-      }
-      actions = [
-        {action = "backup"}
-      ]
-      selector = {
-        matchLabels = {
-          "k10.kasten.io/appNamespace" = kubernetes_namespace.stock.metadata[0].name
-        }
-      }
-    }
-  }
-}
-
-
 resource "kubernetes_secret" "azure_storageaccount" {
   metadata {
     name      = "kasten-sas-token-secret"
@@ -214,7 +184,7 @@ resource "kubernetes_secret" "azure_storageaccount" {
   data = {
     azure_storage_account_id  = azurerm_storage_account.kasten_sa.name
     azure_storage_environment = "AzurePublicCloud"
-    azure_storage_key         = azurerm_storage_account.kasten_sa.primary_access_key 
+    azure_storage_key         = azurerm_storage_account.kasten_sa.primary_access_key
     # data.azurerm_storage_account_sas.kasten_sa_container.sas
   }
 
@@ -232,28 +202,136 @@ resource "kubernetes_manifest" "kasten_location" {
       namespace = var.k10["namespace"]
     }
     spec = {
-      type         = "Location"
+      type = "Location"
       locationSpec = {
         credential = {
-          secretType     = "AzStorageAccount"
+          secretType = "AzStorageAccount"
           secret = {
             apiVersion = "v1"
-            kind = "secret"
-            name = kubernetes_secret.azure_storageaccount.metadata[0].name
-            namespace = var.k10["namespace"]
+            kind       = "secret"
+            name       = kubernetes_secret.azure_storageaccount.metadata[0].name
+            namespace  = var.k10["namespace"]
           }
         }
         type = "ObjectStore"
         objectStore = {
           objectStoreType = "AZ" # Not Azure
-          name = azurerm_storage_container.kasten_sa_container.name
-          # endpoint   = azurerm_storage_account.kasten_sa.primary_blob_endpoint 
-          # skipSSLVerify = "False"
-          # region     = var.azlocation
-          # protectionPeriod = "240h"
+          name            = azurerm_storage_container.kasten_sa_container.name
         }
         infraPortable = "False"
       }
     }
+  }
+}
+
+resource "kubernetes_manifest" "volume_snapshot_class_azure_disk_csi" {
+  manifest = {
+    apiVersion = "snapshot.storage.k8s.io/v1"
+    kind       = "VolumeSnapshotClass"
+    metadata = {
+      name = "csi-azuredisk-vsc-kasten"
+      annotations = {
+        "k10.kasten.io/is-snapshot-class" = "true"
+      }
+    }
+    driver         = "disk.csi.azure.com"
+    deletionPolicy = "Delete"
+  }
+}
+
+resource "kubernetes_manifest" "backup_policy" {
+  depends_on = [kubernetes_manifest.volume_snapshot_class_azure_disk_csi]
+
+  manifest = {
+    apiVersion = "config.kio.kasten.io/v1alpha1"
+    kind       = "Policy"
+
+    metadata = {
+      name      = "demoapp-backup-policy"
+      namespace = var.k10["namespace"]
+    }
+
+    spec = {
+      comment   = "Backup policy for the demoapp"
+      frequency = "@hourly"
+      retention = {
+        hourly = 24
+        daily  = 7
+      }
+      actions = [
+        { action = "backup" }
+      ]
+      selector = {
+        matchLabels = {
+          "k10.kasten.io/appNamespace" = kubernetes_namespace.stock.metadata[0].name
+        }
+      }
+    }
+  }
+  field_manager {
+    force_conflicts = true
+  }
+}
+
+resource "kubernetes_manifest" "backup_policy_with_export" {
+  depends_on = [
+    kubernetes_manifest.volume_snapshot_class_azure_disk_csi,
+    kubernetes_manifest.kasten_location
+  ]
+
+  manifest = {
+    apiVersion = "config.kio.kasten.io/v1alpha1"
+    kind       = "Policy"
+
+    metadata = {
+      name      = "demoapp-backup-policy-export"
+      namespace = var.k10["namespace"]
+    }
+
+    spec = {
+      comment   = "Backup policy for the demoapp"
+      frequency = "@hourly"
+      retention = {
+        hourly = 24
+        daily  = 7
+      }
+      actions = [
+        {
+          action = "backup"
+        },
+        {
+          action = "export"
+          exportParameters = {
+            frequency = "@daily"
+            migrationToken = {
+              name      = ""
+              namespace = ""
+            }
+            profile = {
+              name      = "azure-blob-storage-profile"
+              namespace = var.k10["namespace"]
+            }
+            receiveString = ""
+            exportData = {
+              enabled = true
+            }
+            retention = {
+              daily   = 7
+              weekly  = 0
+              monthly = 0
+              yearly  = 0
+            }
+          }
+        }
+      ]
+      selector = {
+        matchLabels = {
+          "k10.kasten.io/appNamespace" = kubernetes_namespace.stock.metadata[0].name
+        }
+      }
+    }
+  }
+  field_manager {
+    force_conflicts = true
   }
 }

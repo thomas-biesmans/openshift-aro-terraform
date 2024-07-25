@@ -1,6 +1,6 @@
 
 output "k10token" {
-  value = module.kasten_instance.k10token
+  value     = module.kasten_instance.k10token
   sensitive = true
 }
 
