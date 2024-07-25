@@ -51,8 +51,8 @@ resource "kubernetes_manifest" "k10_instance" {
 resource "null_resource" "wait_for_route_to_become_available" {
   depends_on = [kubernetes_manifest.k10_instance]
 
-  triggers = {
-    always_run = "${timestamp()}"
+  lifecycle {
+    replace_triggered_by = [kubernetes_manifest.k10_instance]
   }
 
   provisioner "local-exec" {
@@ -105,10 +105,10 @@ data "kubernetes_resource" "k10_route" {
 # }
 
 resource "null_resource" "wait_for_serviceaccount_to_become_available" {
-  depends_on = [kubernetes_manifest.k10_instance]
+  depends_on = [kubernetes_manifest.k10_instance, null_resource.wait_for_route_to_become_available]
 
-  triggers = {
-    always_run = "${timestamp()}"
+  lifecycle {
+    replace_triggered_by = [kubernetes_manifest.k10_instance]
   }
 
   provisioner "local-exec" {

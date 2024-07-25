@@ -66,10 +66,10 @@ resource "kubernetes_manifest" "k10_operator_subscription" {
 resource "null_resource" "wait_for_kasten_installplans_to_become_available" {
   depends_on = [kubernetes_manifest.k10_operator_subscription]
 
-  triggers = {
-    always_run = "${timestamp()}"
+  lifecycle {
+    replace_triggered_by = [kubernetes_manifest.k10_operator_subscription]
   }
-
+  
   provisioner "local-exec" {
     command = <<EOT
       export KUBECONFIG=${var.kubeconfig_location_relative_to_cwd}
