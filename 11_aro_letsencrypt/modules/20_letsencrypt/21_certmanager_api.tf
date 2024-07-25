@@ -10,13 +10,23 @@ resource "null_resource" "removing_certificate_api_for_manual_run" {
   provisioner "local-exec" {
     command = <<EOT
       export KUBECONFIG=${var.kubeconfig_location_relative_to_cwd}
-      cmctl renew openshift-api -n openshift-config
+      result=$(oc get certificate -n openshift-config -o json | jq -r '.items[].metadata.name')
+      if echo $result | grep -qE ".*openshift-api.*"; then
+        echo "Found existing certificate 'openshift-api', renewing..."
+        cmctl renew openshift-api -n openshift-config
+        echo "Certificate 'openshift-api' renewed."
+      else
+        echo "Existing certificate 'openshift-api' not found, not renewing."
+      fi
     EOT
   }
 }
 
 resource "kubernetes_manifest" "certificate_api" {
-  depends_on = [null_resource.removing_certificate_api_for_manual_run]
+  depends_on = [
+    null_resource.wait_for_issuer_to_become_ready,
+    null_resource.removing_certificate_api_for_manual_run
+  ]
 
   manifest = {
 
@@ -144,7 +154,10 @@ resource "null_resource" "wait_for_certificate_api_secret_to_become_available" {
 }
 
 resource "kubernetes_job" "patch_cluster_api_cert" {
-  depends_on = [null_resource.wait_for_certificate_api_order_to_become_valid]
+  depends_on = [
+    null_resource.wait_for_certificate_api_order_to_become_valid,
+    null_resource.wait_for_certificate_api_secret_to_become_available
+  ]
   
   lifecycle {
     replace_triggered_by = [null_resource.removing_certificate_api_for_manual_run]
@@ -211,18 +224,32 @@ resource "null_resource" "wait_for_certificate_api_push" {
   provisioner "local-exec" {
     command = <<EOT
       export KUBECONFIG=${var.kubeconfig_location_relative_to_cwd}
-      sleep 30
-      condition=false
-      until $condition; do
-        result=$(oc get co kube-apiserver -o json)
-        if echo $result | jq -r ".status.conditions[] | select (.type == \"Progressing\") | .status" | grep -qE "True"; then
-          echo "ClusterOperator kube-apiserver is deploying: " + $(echo $result | jq -r ".status.conditions[] | select (.type == \"Progressing\") | .message")
+      condition_started_progressing=false
+      until $condition_started_progressing; do
+        result_started_progressing=$(oc get co kube-apiserver -o json)
+
+        if echo $result_started_progressing | jq -r ".status.conditions[] | select (.type == \"Progressing\") | .status" | grep -qE "False"; then
+          echo "ClusterOperator kube-apiserver has not started deploying yet."
           sleep 5
         else
-          condition=true
-          echo "ClusterOperator kube-apiserver is done"
+          condition_started_progressing=true
+          echo "ClusterOperator kube-apiserver started deploying"
+
+          condition_is_done=false
+          until $condition_is_done; do
+            result_is_done=$(oc get co kube-apiserver -o json)
+
+            if echo $result_is_done | jq -r ".status.conditions[] | select (.type == \"Progressing\") | .status" | grep -qE "True"; then
+              echo "ClusterOperator kube-apiserver is deploying: " $(echo $result_is_done | jq -r ".status.conditions[] | select (.type == \"Progressing\") | .message")
+              sleep 5
+            else
+              condition_is_done=true
+              echo "ClusterOperator kube-apiserver is done deploying"
+            fi
+          done
         fi
       done
+
     EOT
   }
 }

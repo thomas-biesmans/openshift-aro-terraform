@@ -11,5 +11,5 @@ certmanager:
     name: certmanager
     namespace: openshift-cert-manager
     letsencryptemail: thomas.biesmans@inetum-realdolmen.world
-    manual_refresh_api_certificate_trigger_timestamp: "2024-07-24_18-15"      # Alpha numeric, '-', '_' or '.'
+    manual_refresh_api_certificate_trigger_timestamp: "2024-07-25_14-00"      # Alpha numeric, '-', '_' or '.'
     manual_refresh_wildcard_certificate_trigger_timestamp: "2024-07-24_16-55" # Alpha numeric, '-', '_' or '.'
