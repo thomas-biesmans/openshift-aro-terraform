@@ -8,7 +8,7 @@ azure:
   - Microsoft.RedHatOpenShift
 openshift:
   version: 4.14.16                # Version running on the cluster, available versions found through 'az aro get-versions --location "westeurope\"'
-  cluster_name: arotest           # Cluster's name
+  cluster_name: arotest2          # Cluster's name
   cluster_domain: donisaurs.be    # Domain to be used for the cluster
   main_vm_size: Standard_D8s_v3   # CPU family for the control nodes, minimally Standard_D8s_v3
   worker_vm_size: Standard_D4s_v3 # CPU family for the worker nodes, minimally Standard_D4s_v3
