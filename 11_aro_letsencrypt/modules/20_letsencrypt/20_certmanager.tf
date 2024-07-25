@@ -72,7 +72,7 @@ resource "null_resource" "wait_for_issuer_to_become_ready" {
   lifecycle {
     replace_triggered_by = [kubernetes_manifest.certmanager_instance]
   }
-  
+
   provisioner "local-exec" {
     command = <<EOT
       export KUBECONFIG=${var.kubeconfig_location_relative_to_cwd}

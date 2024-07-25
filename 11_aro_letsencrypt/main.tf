@@ -70,7 +70,7 @@ module "letsencrypt" {
   azure_dns_zone = local.azure_dns_zone
 
   openshift = local.openshift
-  
+
   certmanager = local.certmanager
 
   kubeconfig_location_relative_to_cwd = local.kubeconfig_location_relative_to_cwd_insecure

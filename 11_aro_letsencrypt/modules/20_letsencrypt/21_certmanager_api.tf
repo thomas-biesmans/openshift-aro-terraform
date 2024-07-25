@@ -35,7 +35,7 @@ resource "kubernetes_manifest" "certificate_api" {
     "metadata" = {
       "name"      = "openshift-api"
       "namespace" = "openshift-config"
-      "labels"    = {
+      "labels" = {
         "manual-refresh-trigger-timestamp" = var.certmanager["manual_refresh_api_certificate_trigger_timestamp"]
       }
     }
@@ -158,7 +158,7 @@ resource "kubernetes_job" "patch_cluster_api_cert" {
     null_resource.wait_for_certificate_api_order_to_become_valid,
     null_resource.wait_for_certificate_api_secret_to_become_available
   ]
-  
+
   lifecycle {
     replace_triggered_by = [null_resource.removing_certificate_api_for_manual_run]
   }

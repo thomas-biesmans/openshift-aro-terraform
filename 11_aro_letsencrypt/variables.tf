@@ -94,20 +94,20 @@ locals {
     installPlanApproval = var.certmanager_operator["installPlanApproval"]
     source              = var.certmanager_operator["source"]
     sourceNamespace     = var.certmanager_operator["sourceNamespace"]
-    startingCSV         = var.certmanager_operator["startingCSV"] 
+    startingCSV         = var.certmanager_operator["startingCSV"]
   }
 
   certmanager = local.yaml_config_certmanager.certmanager.certmanager != null ? {
-    name             = lookup(local.yaml_config_certmanager.certmanager.certmanager, "name", "")
-    namespace        = lookup(local.yaml_config_certmanager.certmanager.certmanager, "namespace", "")
-    letsencryptemail = lookup(local.yaml_config_certmanager.certmanager.certmanager, "letsencryptemail", "")
-    manual_refresh_api_certificate_trigger_timestamp = lookup(local.yaml_config_certmanager.certmanager.certmanager, "manual_refresh_api_certificate_trigger_timestamp", "")
+    name                                                  = lookup(local.yaml_config_certmanager.certmanager.certmanager, "name", "")
+    namespace                                             = lookup(local.yaml_config_certmanager.certmanager.certmanager, "namespace", "")
+    letsencryptemail                                      = lookup(local.yaml_config_certmanager.certmanager.certmanager, "letsencryptemail", "")
+    manual_refresh_api_certificate_trigger_timestamp      = lookup(local.yaml_config_certmanager.certmanager.certmanager, "manual_refresh_api_certificate_trigger_timestamp", "")
     manual_refresh_wildcard_certificate_trigger_timestamp = lookup(local.yaml_config_certmanager.certmanager.certmanager, "manual_refresh_wildcard_certificate_trigger_timestamp", "")
     } : {
-    name             = var.certmanager["name"]
-    namespace        = var.certmanager["namespace"]
-    letsencryptemail = var.certmanager["letsencryptemail"]
-    manual_refresh_api_certificate_trigger_timestamp = var.certmanager["manual_refresh_api_certificate_trigger_timestamp"]
+    name                                                  = var.certmanager["name"]
+    namespace                                             = var.certmanager["namespace"]
+    letsencryptemail                                      = var.certmanager["letsencryptemail"]
+    manual_refresh_api_certificate_trigger_timestamp      = var.certmanager["manual_refresh_api_certificate_trigger_timestamp"]
     manual_refresh_wildcard_certificate_trigger_timestamp = var.certmanager["manual_refresh_wildcard_certificate_trigger_timestamp"]
   }
 }
@@ -179,10 +179,10 @@ variable "kubeconfig_location_relative_to_cwd" {
 variable "certmanager" {
   type = map(string)
   default = {
-    name             = "certmanager"
-    namespace        = "openshift-cert-manager"
-    letsencryptemail = "<email address configured for Lets Encrypt>"
-    manual_refresh_api_certificate_trigger_timestamp = "<timestamp string alphanumerically for manual triggers for the API cert, e.g. 'YYYY-MM-DD_hh-mm'>"
+    name                                                  = "certmanager"
+    namespace                                             = "openshift-cert-manager"
+    letsencryptemail                                      = "<email address configured for Lets Encrypt>"
+    manual_refresh_api_certificate_trigger_timestamp      = "<timestamp string alphanumerically for manual triggers for the API cert, e.g. 'YYYY-MM-DD_hh-mm'>"
     manual_refresh_wildcard_certificate_trigger_timestamp = "<timestamp string alphanumerically for manual triggers for the wildcard cert, e.g. 'YYYY-MM-DD_hh-mm'>"
   }
   description = "Cert manager instance details"

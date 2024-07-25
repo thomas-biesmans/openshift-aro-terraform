@@ -148,7 +148,7 @@ resource "kubernetes_job" "patch_cluster_wildcard_cert" {
     null_resource.wait_for_certificate_wildcard_order_to_become_valid,
     null_resource.wait_for_certificate_wildcard_secret_to_become_available
   ]
-  
+
   lifecycle {
     replace_triggered_by = [null_resource.removing_certificate_wildcard_for_manual_run]
   }
