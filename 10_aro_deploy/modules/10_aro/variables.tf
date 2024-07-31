@@ -47,9 +47,15 @@ locals {
   projectname = format("%s-%s", var.project, var.ownerref)
   domain      = format("%s%s", var.project, var.ownerref)
   tags = {
-    owner    = var.owneremail
-    activity = var.activity
-    project  = var.project
+    owner             = var.owneremail
+    activity          = var.activity
+    project           = var.project
+    ea_solutionname   = var.project
+    ea_environment    = "tst"
+    ea_forecasttype   = "small"
+    ea_businessowner  = var.owneremail
+    ea_technicalowner = var.owneremail
+    ea_costcenter     = "Sponsorship"
   }
 }
 
