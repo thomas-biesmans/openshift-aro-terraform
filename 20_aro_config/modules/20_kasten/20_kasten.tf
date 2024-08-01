@@ -298,6 +298,17 @@ resource "kubernetes_manifest" "backup_policy_with_export" {
       actions = [
         {
           action = "backup"
+          backupParameters = {
+            profile = {
+              name      = "azure-blob-storage-profile"
+              namespace = var.k10["namespace"]
+            }
+            imageRepoProfile = {
+              name      = "azure-blob-storage-profile"
+              namespace = var.k10["namespace"]
+            }
+            filters = {}
+          }
         },
         {
           action = "export"
@@ -334,4 +345,16 @@ resource "kubernetes_manifest" "backup_policy_with_export" {
   field_manager {
     force_conflicts = true
   }
+
+  # The following values cannot be ignored through the lifecycle, so adding them as computed_fields per https://github.com/hashicorp/terraform-provider-kubernetes/issues/1378
+  computed_fields = [
+    "spec.actions[1].exportParameters.migrationToken",
+    "spec.actions[1].exportParameters.receiveString"
+  ]
+  # lifecycle {
+  #   ignore_changes = [
+  #     manifest.spec.actions[1].exportParameters.migrationToken,
+  #     manifest.spec.actions[1].exportParameters.receiveString
+  #   ]
+  # }
 }
