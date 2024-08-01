@@ -65,7 +65,41 @@ resource "azurerm_storage_container" "kasten_sa_container" {
 
 # OpenShift
 
-resource "kubernetes_manifest" "bppostgres" {
+# resource "kubernetes_manifest" "blueprint_progress" {
+#   manifest = {
+#     apiVersion = "cr.kanister.io/v1alpha1"
+#     kind       = "Blueprint"
+# 
+#     metadata = {
+#       name      = "postgresql-hooks"
+#       namespace = var.k10["namespace"]
+#     }
+# 
+#     actions = {
+#       backupPrehook = {
+#         name = ""
+#         kind = ""
+#         phases = [
+#           {
+#             func = "KubeExec"
+#             name = "makePGCheckPoint"
+#             args = {
+#               command = [
+#                 "bash", "-o", "errexit", "-o", "pipefail", "-c", "PGPASSWORD=$${POSTGRES_POSTGRES_PASSWORD} psql -d $${POSTGRES_DATABASE} -U postgres -c \"CHECKPOINT;\""
+#               ]
+#               container = "postgresql"
+#               namespace = "{{ .StatefulSet.Namespace }}"
+#               pod       = "{{ index .StatefulSet.Pods 0 }}"
+#             }
+#           }
+#         ]
+#       }
+#     }
+#   }
+# }
+
+
+resource "kubernetes_manifest" "blueprint_progress" {
   manifest = {
     apiVersion = "cr.kanister.io/v1alpha1"
     kind       = "Blueprint"
@@ -77,23 +111,38 @@ resource "kubernetes_manifest" "bppostgres" {
 
     actions = {
       backupPrehook = {
-        name = ""
-        kind = ""
         phases = [
           {
             func = "KubeExec"
             name = "makePGCheckPoint"
             args = {
-              command = [
-                "bash", "-o", "errexit", "-o", "pipefail", "-c", "PGPASSWORD=$${POSTGRES_POSTGRES_PASSWORD} psql -d $${POSTGRES_DATABASE} -U postgres -c \"CHECKPOINT;\""
-              ]
-              container = "postgresql"
               namespace = "{{ .StatefulSet.Namespace }}"
               pod       = "{{ index .StatefulSet.Pods 0 }}"
+              container = "postgresql"
+              command = [
+                "bash", "-o", "errexit", "-o", "pipefail", "-c", "PGPASSWORD=$${POSTGRES_POSTGRES_PASSWORD} psql -d $${POSTGRES_DATABASE} -U postgres -c \"select pg_backup_start('app_cons', fast:=true);\"" # pg_start_backup pre PostgreSQL 15
+              ]
             }
           }
         ]
       }
+      # Per https://pgpedia.info/c/checkpoint.html the posthook is not needed. The prehook creates a checkpoint and the backup is then aborted when the connection is closed.
+      # backupPosthook = {
+      #   phases = [
+      #     {
+      #       func = "KubeExec"
+      #       name = "afterPGBackup"
+      #       args = {
+      #         namespace = "{{ .StatefulSet.Namespace }}"
+      #         pod       = "{{ index .StatefulSet.Pods 0 }}"
+      #         container = "postgresql"
+      #         command = [
+      #           "bash", "-o", "errexit", "-o", "pipefail", "-c", "PGPASSWORD=$${POSTGRES_POSTGRES_PASSWORD} psql -d $${POSTGRES_DATABASE} -U postgres -c \"select pg_backup_stop();\"" # pg_stop_backup pre PostgreSQL 15
+      #         ]
+      #       }
+      #     }
+      #   ]
+      # }
     }
   }
 }
@@ -128,13 +177,13 @@ resource "kubernetes_manifest" "transformreplica" {
   }
 }
 
-resource "kubernetes_manifest" "bpbinding" {
+resource "kubernetes_manifest" "blueprint_binding_progress" {
   manifest = {
     apiVersion = "config.kio.kasten.io/v1alpha1"
     kind       = "BlueprintBinding"
 
     metadata = {
-      name      = "postgres-blueprint-binding"
+      name      = "postgres-hooks"
       namespace = var.k10["namespace"]
     }
 
@@ -148,9 +197,10 @@ resource "kubernetes_manifest" "bpbinding" {
           {
             type = {
               operator = "In"
-              values = [
+              values   = [
                 {
                   group    = "apps"
+                  version  = "v1"
                   resource = "statefulsets"
                 }
               ]
@@ -307,6 +357,21 @@ resource "kubernetes_manifest" "backup_policy_with_export" {
               name      = "azure-blob-storage-profile"
               namespace = var.k10["namespace"]
             }
+            # Kanister blueprint hooks should not be put here, they attach through bindings
+            # hooks = {
+            #   preHook = {
+            #     actionName = "backupPrehook"
+            #     blueprint  = "postgresql-hooks"
+            #   }
+            #   onSuccess = {
+            #     actionName = "backupPosthook"
+            #     blueprint  = "postgresql-hooks"
+            #   }
+            #   onFailure = {
+            #     actionName = "backupPosthook"
+            #     blueprint  = "postgresql-hooks"
+            #   }
+            # }
             filters = {}
           }
         },
@@ -336,9 +401,13 @@ resource "kubernetes_manifest" "backup_policy_with_export" {
         }
       ]
       selector = {
-        matchLabels = {
-          "k10.kasten.io/appNamespace" = kubernetes_namespace.stock.metadata[0].name
-        }
+        matchExpressions = [
+          {
+            key      = "k10.kasten.io/appNamespace"
+            operator = "In"
+            values   = [kubernetes_namespace.stock.metadata[0].name]
+          }
+        ]
       }
     }
   }
