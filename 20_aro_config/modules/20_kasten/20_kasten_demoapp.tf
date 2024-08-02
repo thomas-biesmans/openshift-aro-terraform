@@ -11,7 +11,10 @@ resource "kubernetes_namespace" "hr" {
     ignore_changes = [
       metadata[0].annotations["openshift.io/sa.scc.mcs"],
       metadata[0].annotations["openshift.io/sa.scc.supplemental-groups"],
-      metadata[0].annotations["openshift.io/sa.scc.uid-range"]
+      metadata[0].annotations["openshift.io/sa.scc.uid-range"],
+      metadata[0].labels["k10.kasten.io/actionType"],
+      metadata[0].labels["k10.kasten.io/appName"],
+      metadata[0].labels["k10.kasten.io/policyName"]
     ]
   }
 }
@@ -29,7 +32,10 @@ resource "kubernetes_namespace" "stock" {
     ignore_changes = [
       metadata[0].annotations["openshift.io/sa.scc.mcs"],
       metadata[0].annotations["openshift.io/sa.scc.supplemental-groups"],
-      metadata[0].annotations["openshift.io/sa.scc.uid-range"]
+      metadata[0].annotations["openshift.io/sa.scc.uid-range"],
+      metadata[0].labels["k10.kasten.io/actionType"],
+      metadata[0].labels["k10.kasten.io/appName"],
+      metadata[0].labels["k10.kasten.io/policyName"]
     ]
   }
 
