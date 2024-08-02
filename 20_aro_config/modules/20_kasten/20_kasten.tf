@@ -312,9 +312,13 @@ resource "kubernetes_manifest" "backup_policy" {
         { action = "backup" }
       ]
       selector = {
-        matchLabels = {
-          "k10.kasten.io/appNamespace" = kubernetes_namespace.stock.metadata[0].name
-        }
+        matchExpressions = [
+          {
+            key      = "k10.kasten.io/appNamespace"
+            operator = "In"
+            values   = [kubernetes_namespace.stock.metadata[0].name]
+          }
+        ]
       }
     }
   }
