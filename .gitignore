@@ -3,6 +3,7 @@
 !**/*.tf
 !**/*.yml
 !**/initinsert.psql
+!**/initinsert.sql
 pull-secret.txt
 
 !README.md
