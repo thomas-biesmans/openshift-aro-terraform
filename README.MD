@@ -88,8 +88,8 @@ terraform -chdir=10_aro_deploy output -raw aro_admin_login
 
 On MAC you can copy the password to your clipboard with pbcopy:
 ```zsh
-open $(terraform output -raw console_url)
-terraform output -raw aro_admin_pass | pbcopy
+open $(terraform -chdir=10_aro_deploy output -raw console_url)
+terraform -chdir=10_aro_deploy output -raw aro_admin_pass | pbcopy
 ```
 
 ## Azure Red Hat OpenShift - ARO - Lets Encrypt
@@ -127,13 +127,13 @@ terraform -chdir=20_aro_config apply
 
 Get Storage Account
 ```bash
-terraform output -raw storageaccount
-#terraform output -raw storageaccount_ak 
-terraform output -raw storagecontainer
+terraform -chdir=20_aro_config output -raw storageaccount
+#terraform -chdir=20_aro_config output -raw storageaccount_ak 
+terraform -chdir=20_aro_config output -raw storagecontainer
 ```
 
 ```zsh
-terraform output -raw storageaccount_ak  | pbcopy
+terraform -chdir=20_aro_config output -raw storageaccount_ak  | pbcopy
 ```
 
 # If you installed Kasten K10
